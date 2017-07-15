@@ -1,2 +1,4 @@
-#!bin/bash
-jekyll build --watch `"$(dirname $(readlink -f $0))`/../a1q123456.github.io/
+#!/bin/bash
+cd `dirname $0`
+
+jekyll build --watch "$(pwd)/../a1q123456.github.io/"
