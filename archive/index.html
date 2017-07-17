@@ -1,56 +1,192 @@
 <!DOCTYPE html>
+<html lang="zh">
+  <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title> Archive › new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/contrast/archive/">
-<link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,300italic,400italic" rel="stylesheet">
-<link href="//fonts.googleapis.com/css?family=Gentium+Basic:400,400italic" rel="stylesheet">
-<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-<link href="/contrast/basic.css" rel="stylesheet">
-<link href="/contrast/highlight.css" rel="stylesheet">
-<link href="/contrast/index.css" rel="stylesheet">
-<link type="application/atom+xml" rel="alternate" href="https://a1q123456.github.io/contrast/feed.xml" title="new TechBlog()" />
+<title class="title"> 所有文章 › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/archive/">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="/basic.css" rel="stylesheet">
+<link href="/highlight.css" rel="stylesheet">
+<link href="/index.css" rel="stylesheet">
+<link type="application/atom+xml" rel="alternate" href="https://a1q123456.github.io/feed.xml" title="new TechBlog()" />
 
 
+</head>
 <header>
-  <h1><a href="/contrast/">new TechBlog()</a></h1>
+  <h1><a href="/">new TechBlog()</a></h1>
   <nav>
-    <li><a href="/contrast/">Home</a></li><li><a href="/contrast/archive/" class="selected">Archive</a></li>
+    <li><a href="/">首页</a></li><li><a href="/categories#How-To">How-To</a></li><li><a href="/archive/">所有文章</a></li><li><a href="/categories/">全部分类</a></li>
   </nav>
 </header>
 <main>
   <article class="light">
     <header>
-      <h2><a href="/contrast/archive/">Archive</a></h2>
+      <h2><a href="/archive/" class="title">所有文章</a></h2>
       <span></span>
     </header>
     <div>
 <ul>
   
   
-  <h3>2014</h3>
+  <h3>2017</h3>
   
-  <li>September: <a href="/contrast/example/2014/09/10/example-2/">Example 2</a></li>
-  
-  
-  
-  
-  
-  
-  <li>September: <a href="/contrast/example/2014/09/10/example/">Example</a></li>
+  <li>July: <a href="/how-to/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></li>
   
 </ul>
 
     </div>
     
     
+    
   </article>
 </main>
 
+
+  <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
+  <a href="javascript: scrollTop()" class="scroll-top"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
 <footer>
-  <span><a href="https://a1q123456.github.io">Jack Branson</a></span>
-  <span><a href="https://github.com/a1q123456/"><i class="fa fa-github-square"></i></a></span>
-  <span>© 2017</span>
+  <p><a href="https://a1q123456.github.io">Jack Branson</a></p>
+  <p class="rights-declaration">本站所有文章禁止转载、摘录，违者将依法追究责任，笔者保留所有权利<br>Reproducing any posts of this site is prohibited. author reserves all rights</p>
+  <p><a href="https://github.com/a1q123456/"><i class="fa fa-github-square"></i></a></p>
+  <p>© <script>document.write(new Date().getFullYear())</script></p>
 </footer>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script src="//cdn.bootcss.com/js-cookie/latest/js.cookie.js"></script>
+  <script>AV.initialize("dRftj6ACMxzGu8NXualu7WNW-gzGzoHsz", "AYBab1rsCFPh4wJns3yW1Qiy");</script>
+  <script>
+    function showHitCount(Counter) {
+      /* 这是给一个页面中有多篇文章时所调用的，例如博客主界面或者存档界面。
+      */
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      // 获取页面中所有文章的id（page.url）
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      // 批量查询
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var hits = item.get('hits');// 获取点击次数
+            var element = document.getElementById(url);
+
+            // 显示点击次数
+            $(element).find(COUNT_CONTAINER_REF).text(hits);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      // 页面（博客文章）中的信息：leancloud_visitors
+      // id为page.url， data-flag-title为page.title
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      // 只根据文章的url查询LeanCloud服务器中的数据
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {//说明LeanCloud中已经记录了这篇文章
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("hits");// 将点击次数加1
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('hits'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            // 执行这里，说明LeanCloud中还没有记录此文章
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);// 把文章标题
+            newcounter.set("url", url); // 文章url
+            newcounter.set("hits", 1); // 初始点击次数：1次
+            newcounter.save(null, { // 上传到LeanCloud服务器中
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('hits'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+    function recordHit()
+    {
+      Cookies.set('/archive/', '  ', {expires: 3});
+    }
+
+    function checkRecord()
+    {
+      return typeof Cookies.get('/archive/') === 'undefined';
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        if (!checkRecord())
+        {
+          showHitCount(Counter);
+        }
+        else
+        {
+          // in post.html, so add 1 to hit counts
+          addCount(Counter);
+          recordHit();
+        }
+      }
+      else if ($('.post-link').length > 1){
+        // in index.html, there are many 'leancloud_visitors' and 'post-link', so just show hit counts.
+        showHitCount(Counter);
+      }
+    });
+  </script>
+
+<html>

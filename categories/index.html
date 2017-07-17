@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title class="title"> 404 › new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/404/">
+<title class="title"> 全部分类 › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/categories/">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="/basic.css" rel="stylesheet">
 <link href="/highlight.css" rel="stylesheet">
@@ -24,18 +24,37 @@
 <main>
   <article class="light">
     <header>
-      <h2><a href="/404/" class="title">404</a></h2>
+      <h2><a href="/categories/" class="title">全部分类</a></h2>
       <span></span>
-      
-        <span id="/404/" class="leancloud_visitors" data-flag-title="404">
-          <span class="post-meta-divider">|</span>
-          <span class="post-meta-item-text"> 阅读量:  </span>
-          <span class="leancloud-visitors-count"></span>
-        </span>
-      
     </header>
     <div>
-<p>Nothing to see here. <a href="https://a1q123456.github.io">Go back …</a></p>
+  
+  <div class="category" id="How-To">
+    <h3>How-To</h3>
+    <ul>
+    
+      <li><a href="/how-to/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></li>
+    
+
+    </ul>
+  </div>
+  
+
+  <script>
+    var hash;
+    if (window.location.hash.length != 0 && (hash = window.location.hash.slice(1)))
+    {
+      var categories = document.querySelectorAll('.category');
+      categories.forEach(function(ele) {
+        if (ele.id != hash)
+        {
+          ele.style.display = 'none';
+        }
+      });
+      document.querySelectorAll('.title').forEach(function(ele) { ele.textContent = decodeURI(hash)});
+    }
+
+  </script>
 
     </div>
     
@@ -160,12 +179,12 @@
     }
     function recordHit()
     {
-      Cookies.set('/404/', '  ', {expires: 3});
+      Cookies.set('/categories/', '  ', {expires: 3});
     }
 
     function checkRecord()
     {
-      return typeof Cookies.get('/404/') === 'undefined';
+      return typeof Cookies.get('/categories/') === 'undefined';
     }
 
     $(function() {

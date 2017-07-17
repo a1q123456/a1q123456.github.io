@@ -10,10 +10,7 @@ body {
   min-height: 100vh; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Gentium Basic";
-  margin: 0.4em 0;
-  letter-spacing: 2px;
-  text-transform: uppercase; }
+  margin: 0.4em 0; }
 
 nav {
   margin: 1em 0; }
