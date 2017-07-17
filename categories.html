@@ -1,0 +1,32 @@
+---
+
+title: "全部分类"
+layout: page
+---
+  {% for category in site.categories %}
+  <div class="category" id="{{category | first | cgi_escape }}">
+    <h3>{{ category | first }}</h3>
+    <ul>
+    {% for post in category[1] %}
+      <li><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></li>
+    {% endfor %}
+
+    </ul>
+  </div>
+  {% endfor %}
+
+  <script>
+    var hash;
+    if (window.location.hash.length != 0 && (hash = window.location.hash.slice(1)))
+    {
+      var categories = document.querySelectorAll('.category');
+      categories.forEach(function(ele) {
+        if (ele.id != hash)
+        {
+          ele.style.display = 'none';
+        }
+      });
+      document.querySelectorAll('.title').forEach(function(ele) { ele.textContent = decodeURI(hash)});
+    }
+
+  </script>

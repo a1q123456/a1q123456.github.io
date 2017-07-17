@@ -3,10 +3,10 @@ author: "Jack Branson"
 description: "技术博客，写点技术"
 more: "阅读更多 »"
 url: "https://a1q123456.github.io"
-baseurl: "/contrast" # comment out if in root directory
+# baseurl: "" # comment out if in root directory
 
 comments:
-  disqus: "a1q123456"
+#  disqus: "a1q123456"
 #  isso: "comments.mysite.org"
 
 style:
@@ -15,7 +15,7 @@ style:
   padding: 30%
   nav: "#222"
   articles: 'light' # 'light' 'dark' and 'stripe' possible
-  uppercase: true
+  uppercase: false
 
 # see http://fontawesome.io/icons/#brand for all possible icons
 # notice: squared icons only work if supported by font-awesome
@@ -26,7 +26,17 @@ links:
 paginate: 10
 excerpt_separator: "\n\n\n" # excerpt ends after two blank lines
 exclude: 
-  run_watch.sh
+  - build.sh
+  - README.md
+  - LICENSE.md
+  - Gemfile
+  - Gemfile.lock
 permalink: pretty
-defaults: [{scope: {path: ""}, values: {layout: "default"}}, {scope: {path: "", type: "posts"}, values: {comments: true}}]
-gems: [jekyll-feed, jekyll-paginate] # include feed plugin (supported by gh-pages)
+defaults: [{scope: {path: ""}, values: {layout: "post"}}, {scope: {path: "", type: "posts"}, values: {comments: true}}]
+plugins: [jekyll-feed, jekyll-paginate] # include feed plugin (supported by gh-pages)
+timezone: Asia/Shanghai
+
+leancloud:
+  enable: true
+  app_id: dRftj6ACMxzGu8NXualu7WNW-gzGzoHsz
+  app_key: AYBab1rsCFPh4wJns3yW1Qiy

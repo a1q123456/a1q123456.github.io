@@ -1,0 +1,39 @@
+---
+layout: blank
+---
+<main>
+  <article class="{% if site.style.articles == 'stripe' %}light{% else %}{{ site.style.articles }}{% endif %}">
+    <header>
+      <h2><a href="{{ page.url | prepend: site.baseurl }}" class="title">{{ page.title }}</a></h2>
+      <span>{% if page.author %}{{ page.author }} • {% endif %}{% if page.date %}<time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%b %-d, %Y" }}</time>{% endif %}{% if page.categories %} • {{ page.categories | array_to_sentence_string }}{% endif %}</span>
+    </header>
+    <div>
+{{ content }}
+    </div>
+    {% if site.comments.isso and page.comments %}
+    <div id="isso-thread"></div>
+    {% endif %}
+    {% if site.comments.disqus and page.comments %}
+    <div id="disqus_thread"></div>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+    {% endif %}
+    {% if page.comments %}
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+      <script type="text/javascript">
+      (function(d, s) {
+          var j, e = d.getElementsByTagName(s)[0];
+
+          if (typeof LivereTower === 'function') { return; }
+
+          j = d.createElement(s);
+          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+          j.async = true;
+
+          e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+      </script>
+      <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
+    {% endif %}
+  </article>
+</main>
