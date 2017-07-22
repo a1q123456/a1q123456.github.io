@@ -71,16 +71,16 @@
 再实现一个 <code class="highlighter-rouge">ISqlConnectionProvider</code>，以后每当需要数据库连接，都通过<code class="highlighter-rouge">ISqlConnectionProvider</code>获取数据库连接。
 如果需要改变数据库连接逻辑，只需要改变 <code class="highlighter-rouge">ISqlConnectionProvider</code>的逻辑就可以了</p>
 
-<div class="language-c# highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
     <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">ISqlConnection</span>
     <span class="n">configurationManager</span><span class="p">:</span> <span class="n">IConfigurationManager</span> 
     
-    <span class="n">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">self</span><span class="p">):</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">sqlConnection</span> <span class="p">=</span> <span class="n">ISqlConnectionProvider</span><span class="p">.</span><span class="nf">getConnection</span><span class="p">()</span>
-        <span class="n">self</span><span class="p">.</span><span class="n">configurationManager</span> <span class="p">=</span> <span class="n">IConfigurationManagerProvider</span><span class="p">.</span><span class="nf">getConfigurationManager</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sqlConnection</span> <span class="o">=</span> <span class="n">ISqlConnectionProvider</span><span class="o">.</span><span class="n">getConnection</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configurationManager</span> <span class="o">=</span> <span class="n">IConfigurationManagerProvider</span><span class="o">.</span><span class="n">getConfigurationManager</span><span class="p">()</span>
     
     
-    <span class="err">#</span> <span class="p">...</span>
+    <span class="c"># ...</span>
 
 </code></pre>
 </div>
