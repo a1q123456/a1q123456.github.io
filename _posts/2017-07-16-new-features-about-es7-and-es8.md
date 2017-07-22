@@ -1,7 +1,7 @@
 ---
 title:  "ES7、ES8最新特性"
 date:   2017-07-17 00:00:00
-categories: How-To
+categories: Javascript
 comments: true
 ---
 
@@ -201,4 +201,4 @@ function getDataFromServer()
     });
 }
 ```
-`async`关键字简化了异步回调的编写模式，可以使用同步的方式写异步代码，并且不容易出错
+`async`关键字简化了异步回调的编写模式，可以使用同步的方式写异步代码，且不易出错
