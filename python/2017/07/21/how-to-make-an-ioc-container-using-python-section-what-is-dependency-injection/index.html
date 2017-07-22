@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title class="title">new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/">
+<title class="title"> Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入 › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="/basic.css" rel="stylesheet">
 <link href="/highlight.css" rel="stylesheet">
@@ -22,105 +22,16 @@
   </nav>
 </header>
 <main>
-  
   <article class="light">
     <header>
-      <h2><a class="post-link" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></h2>
-      <span><time datetime="2017-07-22T08:00:00+08:00">Jul 22, 2017</time> • Python</span>
-      
-          <span id="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/" class="leancloud_visitors" data-flag-title="">
-          <span class="post-meta-divider">|</span>
-          <span class="post-meta-item-text"> 阅读量:  </span>
-          <span class="leancloud-visitors-count"></span>
-          </span>
-      
-    </header>
-    <div>
-<h1 id="为什么需要获取函数签名">为什么需要获取函数签名</h1>
-
-<p>如果规定了类将自己的依赖都放置在构造函数的参数中的话，通过获取构造函数的签名，就可以获取类的依赖。
-因此，第一步就是获取构造函数的签名。</p>
-
-<h1 id="inspect模块">inspect模块</h1>
-
-<blockquote>
-  <p>The inspect module provides several useful functions to help get information about live objects such as modules, classes, methods, functions, tracebacks, frame objects, and code objects. For example, it can help you examine the contents of a class, retrieve the source code of a method, extract and format the argument list for a function, or get all the information you need to display a detailed traceback.</p>
-</blockquote>
-
-<blockquote>
-  <p>inspect 模块提供了多种用来获取运行时对象，如模块、类、方法、函数、调用栈、栈帧以及代码对象的函数。
-  例如，它可以帮助你测试类的内容，获取方法的代码，读取函数的参数，或获取所有你需要显示的调用栈的细节。
-                                    —— Python 文档</p>
-</blockquote>
-
-
-    </div>
-    <footer>
-      <p><a class="ghost" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">阅读更多 »</a></p>
-    </footer>
-  </article>
-
-  <article class="light">
-    <header>
-      <h2><a class="post-link" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</a></h2>
-      <span><time datetime="2017-07-22T08:00:00+08:00">Jul 22, 2017</time> • Python</span>
-      
-          <span id="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/" class="leancloud_visitors" data-flag-title="">
-          <span class="post-meta-divider">|</span>
-          <span class="post-meta-item-text"> 阅读量:  </span>
-          <span class="leancloud-visitors-count"></span>
-          </span>
-      
-    </header>
-    <div>
-<p>通过读取Type Hinting，就可以知道构造函数所依赖的类了。</p>
-
-<h1 id="什么是type-hinting">什么是Type Hinting</h1>
-
-<p>回忆一下C语言</p>
-<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">sum</span><span class="p">(</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="n">b</span><span class="p">)</span>
-<span class="p">{</span>
-    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
-<span class="p">}</span>
-
-</code></pre>
-</div>
-
-<p>C语言中，所有的变量、表达式、函数都有自己的<em>固定</em>类型，而在Python中，每个变量虽然有自己的类型信息，但变量的类型并不是固定的。</p>
-
-<p>```python
-def sum(a, b):<br />
-    return a + b</p>
-
-<p>type(sum(1, 2))  # int</p>
-
-<p>type(sum(1.2, 2.3))  # float</p>
-
-<p>b = 1</p>
-
-<p>type(b)  # int</p>
-
-<p>b = 1.2</p>
-
-<p>type(b)  # float</p>
-
-
-    </div>
-    <footer>
-      <p><a class="ghost" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">阅读更多 »</a></p>
-    </footer>
-  </article>
-
-  <article class="light">
-    <header>
-      <h2><a class="post-link" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></h2>
+      <h2><a href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/" class="title">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></h2>
       <span><time datetime="2017-07-21T08:00:00+08:00">Jul 21, 2017</time> • Python</span>
       
-          <span id="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/" class="leancloud_visitors" data-flag-title="">
+        <span id="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/" class="leancloud_visitors" data-flag-title="Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入">
           <span class="post-meta-divider">|</span>
           <span class="post-meta-item-text"> 阅读量:  </span>
           <span class="leancloud-visitors-count"></span>
-          </span>
+        </span>
       
     </header>
     <div>
@@ -174,43 +85,74 @@ def sum(a, b):<br />
 </code></pre>
 </div>
 
+<h1 id="什么是ioc-container">什么是IOC Container</h1>
+
+<p><em>IOC(Inverse of Control) Container</em>依赖倒转容器。经过结偶，<code class="highlighter-rouge">UserRepository</code>类已经很完美了，但是，如果能每次都自动获取依赖，而不需要手动调用Provider，岂不是更方便。</p>
+
+<p>如果可以通过以下方式，将依赖作为参数，由类的使用者提供，那就更完美了。</p>
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
+    <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">ISqlConnection</span>
+    <span class="n">configurationManager</span><span class="p">:</span> <span class="n">IConfigurationManager</span> 
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">ISqlConnection</span><span class="p">,</span> <span class="n">configurationManager</span><span class="p">:</span> <span class="n">IConfigurationManager</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sqlConnection</span> <span class="o">=</span> <span class="n">sqlConnection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configurationManager</span> <span class="o">=</span> <span class="n">configurationManager</span>
+    
+    <span class="c"># ...</span>
+
+</code></pre>
+</div>
+
+<p>Python 3.5中，已经加入了Type Hinting的支持，因此可以通过获取参数的Type Hinting，获取参数的期望类型。</p>
+
+<p>如果每一次都由类的使用者提供的话，想必使用者就会产生对很多乱七八糟毫不相干的类的依赖。
+因此，可以通过一个容器，专门管理这些依赖，然后在需要的时候提供给使用者，那就很方便了。</p>
+
+<p>这样的，可以管理类的依赖关系的容器，就是IOC容器了。实现这样的容器，主要有以下几个步骤。</p>
+
+<h2 id="分析依赖">分析依赖</h2>
+
+<p>要让依赖可以被外部分析到，最好的办法自然是把所依赖的类作为构造函数的参数。这样外部就可以通过反射等方式，获取参数类型，根据类型，传递所需要的依赖对象。</p>
+
+<p>因此，常见的分析依赖的方法，就是<em>通过反射，将类所依赖的对象的类型读取出来，然后根据依赖对象的类型，给出相应的依赖对象</em>。当然，这需要语言特性的支持。</p>
+
+<h2 id="依赖注入">依赖注入</h2>
+
+<p>把构造函数的所有的参数都准备好后，把参数全部传递给构造函数，自然就可以完成类的构造。
+当使用者需要一个类的时候，只需使用容器来构造类即可。这个过程称为 <em>依赖注入</em>。</p>
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="n">userRepository</span><span class="p">:</span> <span class="n">UserRepository</span> <span class="o">=</span> <span class="n">UserRepository</span><span class="p">(</span><span class="n">ISqlConnectionProvider</span><span class="p">(),</span> <span class="n">IConfigurationManagerProvider</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">vs</span>
+
+<span class="n">userRepository</span><span class="p">:</span> <span class="n">UserRepository</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">UserRepository</span><span class="p">)</span>
+
+</code></pre>
+</div>
+
 
     </div>
-    <footer>
-      <p><a class="ghost" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">阅读更多 »</a></p>
-    </footer>
-  </article>
+    
+    
+    
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+      <script type="text/javascript">
+      (function(d, s) {
+          var j, e = d.getElementsByTagName(s)[0];
 
-  <article class="light">
-    <header>
-      <h2><a class="post-link" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></h2>
-      <span><time datetime="2017-07-17T08:00:00+08:00">Jul 17, 2017</time> • Javascript</span>
-      
-          <span id="/javascript/2017/07/17/new-features-about-es7-and-es8/" class="leancloud_visitors" data-flag-title="">
-          <span class="post-meta-divider">|</span>
-          <span class="post-meta-item-text"> 阅读量:  </span>
-          <span class="leancloud-visitors-count"></span>
-          </span>
-      
-    </header>
-    <div>
-<h2 id="arrayprototypeincludes">Array.prototype.includes</h2>
+          if (typeof LivereTower === 'function') { return; }
 
-<p>以后，如果只想知道元素是否在数组当中，可以使用<code class="highlighter-rouge">arr.includes(...)</code>来取代旧的<code class="highlighter-rouge">arr.indexOf(...) !== -1</code>，
-类似于Python中的<code class="highlighter-rouge">in</code>操作符.</p>
+          j = d.createElement(s);
+          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+          j.async = true;
 
-<p><code class="highlighter-rouge">Array.prototype.indexOf</code> 返回元素在数组中的位置，若不存在，则返回<code class="highlighter-rouge">-1</code>。
-相比而言，<code class="highlighter-rouge">Array.prototype.includes</code> 返回<code class="highlighter-rouge">boolean</code>类型，<code class="highlighter-rouge">true</code>表示该数组包含此元素，否则为<code class="highlighter-rouge">false</code>。</p>
-
-
+          e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+      </script>
+      <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
     </div>
-    <footer>
-      <p><a class="ghost" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">阅读更多 »</a></p>
-    </footer>
+    
   </article>
-
 </main>
-
 
 
   <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
@@ -328,12 +270,12 @@ def sum(a, b):<br />
     }
     function recordHit()
     {
-      Cookies.set('/', '  ', {expires: 3});
+      Cookies.set('/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/', '  ', {expires: 3});
     }
 
     function checkRecord()
     {
-      return typeof Cookies.get('/') === 'undefined';
+      return typeof Cookies.get('/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/') === 'undefined';
     }
 
     $(function() {

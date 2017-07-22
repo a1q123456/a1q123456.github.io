@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="author" content="Jack Branson">
+<meta name="description" content="技术博客，写点技术">
+<title class="title"> Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名 › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="/basic.css" rel="stylesheet">
+<link href="/highlight.css" rel="stylesheet">
+<link href="/index.css" rel="stylesheet">
+<link type="application/atom+xml" rel="alternate" href="https://a1q123456.github.io/feed.xml" title="new TechBlog()" />
+
+
+</head>
+<header>
+  <h1><a href="/">new TechBlog()</a></h1>
+  <nav>
+    <li><a href="/">首页</a></li><li><a href="/categories#Javascript">Javascript</a></li><li><a href="/categories#Python">Python</a></li><li><a href="/archive/">所有文章</a></li><li><a href="/categories/">全部分类</a></li>
+  </nav>
+</header>
+<main>
+  <article class="light">
+    <header>
+      <h2><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/" class="title">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></h2>
+      <span><time datetime="2017-07-22T08:00:00+08:00">Jul 22, 2017</time> • Python</span>
+      
+        <span id="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/" class="leancloud_visitors" data-flag-title="Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
+    </header>
+    <div>
+<h1 id="为什么需要获取函数签名">为什么需要获取函数签名</h1>
+
+<p>如果规定了类将自己的依赖都放置在构造函数的参数中的话，通过获取构造函数的签名，就可以获取类的依赖。
+因此，第一步就是获取构造函数的签名。</p>
+
+<h1 id="inspect模块">inspect模块</h1>
+
+<blockquote>
+  <p>The inspect module provides several useful functions to help get information about live objects such as modules, classes, methods, functions, tracebacks, frame objects, and code objects. For example, it can help you examine the contents of a class, retrieve the source code of a method, extract and format the argument list for a function, or get all the information you need to display a detailed traceback.</p>
+</blockquote>
+
+<blockquote>
+  <p>inspect 模块提供了多种用来获取运行时对象，如模块、类、方法、函数、调用栈、栈帧以及代码对象的函数。
+  例如，它可以帮助你测试类的内容，获取方法的代码，读取函数的参数，或获取所有你需要显示的调用栈的细节。
+                                    —— Python 文档</p>
+</blockquote>
+
+<p>关于inspect的文档，本文不再赘述，请参阅<a href="https://docs.python.org/3/library/inspect.html">inspect — Inspect live objects</a></p>
+
+<h1 id="获取参数以及参数类型">获取参数以及参数类型</h1>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+</code></pre>
+</div>
+<p>函数可以很容易的获取自己的类型，但这还不够，必须要在函数外部获取函数的各种信息。</p>
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+<span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>  <span class="c"># (a:int)</span>
+
+
+</code></pre>
+</div>
+
+<p>通过signature函数，可以获取对象的签名，signature函数返回一个Signature对象。
+想要获取签名的细节，可以调用Signature::parameters属性，和Signature::return_annotations属性，以及Signature::bind属性。</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">1</span>
+
+<span class="n">signature</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+
+<span class="n">parameters</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span>  <span class="c"># a: int</span>
+
+<span class="n">bind</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">bind</span>  <span class="c"># None</span>
+
+<span class="n">return_annotation</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">return_annotation</span>  <span class="c"># int</span>
+
+</code></pre>
+</div>
+
+<p>实现依赖注入需要获取参数的类型，因此需要调用parameters属性，parameters属性返回OrderedDict对象。
+其中，key为参数名，value为参数的Parameter对象。Parameter对象提供了参数的元信息（如：类型，默认值，名称等），
+通过Parameter对象的annotation属性，可以获取参数的Type Hinting。</p>
+
+<p>因此，获取函数参数类型的完整代码如下：</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">1</span>
+    
+<span class="n">parameters</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">test</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">TParameter</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">annotation</span>
+    <span class="n">parameterName</span> <span class="o">=</span> <span class="n">name</span>
+
+</code></pre>
+</div>
+
+    </div>
+    
+    
+    
+    <div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+      <script type="text/javascript">
+      (function(d, s) {
+          var j, e = d.getElementsByTagName(s)[0];
+
+          if (typeof LivereTower === 'function') { return; }
+
+          j = d.createElement(s);
+          j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+          j.async = true;
+
+          e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+      </script>
+      <noscript> 为正常使用来必力评论功能请激活JavaScript</noscript>
+    </div>
+    
+  </article>
+</main>
+
+
+  <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
+  <a href="javascript: scrollTop()" class="scroll-top"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
+<footer>
+  <p><a href="https://a1q123456.github.io">Jack Branson</a></p>
+  <p class="rights-declaration">本站所有文章禁止转载、摘录，违者将依法追究责任，笔者保留所有权利<br>Reproducing any posts of this site is prohibited. author reserves all rights</p>
+  <p><a href="https://github.com/a1q123456/"><i class="fa fa-github-square"></i></a></p>
+  <p>© <script>document.write(new Date().getFullYear())</script></p>
+</footer>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script src="//cdn.bootcss.com/js-cookie/latest/js.cookie.js"></script>
+  <script>AV.initialize("dRftj6ACMxzGu8NXualu7WNW-gzGzoHsz", "AYBab1rsCFPh4wJns3yW1Qiy");</script>
+  <script>
+    function showHitCount(Counter) {
+      /* 这是给一个页面中有多篇文章时所调用的，例如博客主界面或者存档界面。
+      */
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      // 获取页面中所有文章的id（page.url）
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      // 批量查询
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var hits = item.get('hits');// 获取点击次数
+            var element = document.getElementById(url);
+
+            // 显示点击次数
+            $(element).find(COUNT_CONTAINER_REF).text(hits);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      // 页面（博客文章）中的信息：leancloud_visitors
+      // id为page.url， data-flag-title为page.title
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      // 只根据文章的url查询LeanCloud服务器中的数据
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {//说明LeanCloud中已经记录了这篇文章
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("hits");// 将点击次数加1
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('hits'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            // 执行这里，说明LeanCloud中还没有记录此文章
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);// 把文章标题
+            newcounter.set("url", url); // 文章url
+            newcounter.set("hits", 1); // 初始点击次数：1次
+            newcounter.save(null, { // 上传到LeanCloud服务器中
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('hits'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+    function recordHit()
+    {
+      Cookies.set('/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/', '  ', {expires: 3});
+    }
+
+    function checkRecord()
+    {
+      return typeof Cookies.get('/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/') === 'undefined';
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        if (!checkRecord())
+        {
+          showHitCount(Counter);
+        }
+        else
+        {
+          // in post.html, so add 1 to hit counts
+          addCount(Counter);
+          recordHit();
+        }
+      }
+      else if ($('.post-link').length > 1){
+        // in index.html, there are many 'leancloud_visitors' and 'post-link', so just show hit counts.
+        showHitCount(Counter);
+      }
+    });
+  </script>
+
+<html>

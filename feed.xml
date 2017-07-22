@@ -1,4 +1,237 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.5.0">Jekyll</generator><link href="https://a1q123456.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://a1q123456.github.io/" rel="alternate" type="text/html" /><updated>2017-07-17T23:57:10+08:00</updated><id>https://a1q123456.github.io/</id><title type="html">new TechBlog()</title><subtitle>技术博客，写点技术</subtitle><author><name>Jack Branson</name></author><entry><title type="html">ES7、ES8最新特性</title><link href="https://a1q123456.github.io/how-to/2017/07/17/new-features-about-es7-and-es8/" rel="alternate" type="text/html" title="ES7、ES8最新特性" /><published>2017-07-17T08:00:00+08:00</published><updated>2017-07-17T08:00:00+08:00</updated><id>https://a1q123456.github.io/how-to/2017/07/17/new-features-about-es7-and-es8</id><content type="html" xml:base="https://a1q123456.github.io/how-to/2017/07/17/new-features-about-es7-and-es8/">&lt;h2 id=&quot;arrayprototypeincludes&quot;&gt;Array.prototype.includes&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.5.0">Jekyll</generator><link href="https://a1q123456.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://a1q123456.github.io/" rel="alternate" type="text/html" /><updated>2017-07-22T23:28:08+08:00</updated><id>https://a1q123456.github.io/</id><title type="html">new TechBlog()</title><subtitle>技术博客，写点技术</subtitle><author><name>Jack Branson</name></author><entry><title type="html">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</title><link href="https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/" rel="alternate" type="text/html" title="Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名" /><published>2017-07-22T08:00:00+08:00</published><updated>2017-07-22T08:00:00+08:00</updated><id>https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature</id><content type="html" xml:base="https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">&lt;h1 id=&quot;为什么需要获取函数签名&quot;&gt;为什么需要获取函数签名&lt;/h1&gt;
+
+&lt;p&gt;如果规定了类将自己的依赖都放置在构造函数的参数中的话，通过获取构造函数的签名，就可以获取类的依赖。
+因此，第一步就是获取构造函数的签名。&lt;/p&gt;
+
+&lt;h1 id=&quot;inspect模块&quot;&gt;inspect模块&lt;/h1&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;The inspect module provides several useful functions to help get information about live objects such as modules, classes, methods, functions, tracebacks, frame objects, and code objects. For example, it can help you examine the contents of a class, retrieve the source code of a method, extract and format the argument list for a function, or get all the information you need to display a detailed traceback.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;inspect 模块提供了多种用来获取运行时对象，如模块、类、方法、函数、调用栈、栈帧以及代码对象的函数。
+  例如，它可以帮助你测试类的内容，获取方法的代码，读取函数的参数，或获取所有你需要显示的调用栈的细节。
+                                    —— Python 文档&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;关于inspect的文档，本文不再赘述，请参阅&lt;a href=&quot;https://docs.python.org/3/library/inspect.html&quot;&gt;inspect — Inspect live objects&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;获取参数以及参数类型&quot;&gt;获取参数以及参数类型&lt;/h1&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;函数可以很容易的获取自己的类型，但这还不够，必须要在函数外部获取函数的各种信息。&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;inspect&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# (a:int)&lt;/span&gt;
+
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;通过signature函数，可以获取对象的签名，signature函数返回一个Signature对象。
+想要获取签名的细节，可以调用Signature::parameters属性，和Signature::return_annotations属性，以及Signature::bind属性。&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inspect&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# a: int&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;bind&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bind&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# None&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;return_annotation&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;return_annotation&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# int&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;实现依赖注入需要获取参数的类型，因此需要调用parameters属性，parameters属性返回OrderedDict对象。
+其中，key为参数名，value为参数的Parameter对象。Parameter对象提供了参数的元信息（如：类型，默认值，名称等），
+通过Parameter对象的annotation属性，可以获取参数的Type Hinting。&lt;/p&gt;
+
+&lt;p&gt;因此，获取函数参数类型的完整代码如下：&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+    
+&lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;inspect&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;signature&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parameter&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;items&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;TParameter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parameter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;annotation&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;parameterName&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;</content><author><name>Jack Branson</name></author><summary type="html">为什么需要获取函数签名 如果规定了类将自己的依赖都放置在构造函数的参数中的话，通过获取构造函数的签名，就可以获取类的依赖。 因此，第一步就是获取构造函数的签名。 inspect模块 The inspect module provides several useful functions to help get information about live objects such as modules, classes, methods, functions, tracebacks, frame objects, and code objects. For example, it can help you examine the contents of a class, retrieve the source code of a method, extract and format the argument list for a function, or get all the information you need to display a detailed traceback. inspect 模块提供了多种用来获取运行时对象，如模块、类、方法、函数、调用栈、栈帧以及代码对象的函数。 例如，它可以帮助你测试类的内容，获取方法的代码，读取函数的参数，或获取所有你需要显示的调用栈的细节。 —— Python 文档</summary></entry><entry><title type="html">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</title><link href="https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/" rel="alternate" type="text/html" title="Python-如何实现一个依赖注入IOC容器 二：Type Hinting" /><published>2017-07-22T08:00:00+08:00</published><updated>2017-07-22T08:00:00+08:00</updated><id>https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting</id><content type="html" xml:base="https://a1q123456.github.io/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">&lt;p&gt;通过读取Type Hinting，就可以知道构造函数所依赖的类了。&lt;/p&gt;
+
+&lt;h1 id=&quot;什么是type-hinting&quot;&gt;什么是Type Hinting&lt;/h1&gt;
+
+&lt;p&gt;回忆一下C语言&lt;/p&gt;
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;C语言中，所有的变量、表达式、函数都有自己的&lt;em&gt;固定&lt;/em&gt;类型，而在Python中，每个变量虽然有自己的类型信息，但变量的类型并不是固定的。&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;  
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# int&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;1.2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;2.3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# float&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;  
+
+&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# int&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;1.2&lt;/span&gt;  
+
+&lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# float&lt;/span&gt;
+
+
+&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# 3&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'bcd'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# not expected, value is 'abcd'&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;为了让函数的调用方明确的知道自己应该传递什么样的参数，Python3.5中加入了Type Hinting的支持。&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'bcd'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# will be warned&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Type Hinting 虽然不是强制要求的，但仍然可以指导变量的类型。在IDE的智能提示中很有用。&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;
+&lt;span class=&quot;n&quot;&gt;l&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'a'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'b'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'c'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;'d'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;xxx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;?&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# type of i is unknown, cannot providing any suggestions&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;xxx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;l&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;yyy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;arr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;slice&lt;/span&gt;  &lt;span class=&quot;c&quot;&gt;# i may be a string, providing string suggestions&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;yyy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;l&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;关于Type Hinting 的文档，请参阅：&lt;a href=&quot;https://docs.python.org/3/library/typing.html&quot;&gt;Support for type hints&lt;/a&gt;&lt;/p&gt;</content><author><name>Jack Branson</name></author><summary type="html">通过读取Type Hinting，就可以知道构造函数所依赖的类了。 什么是Type Hinting 回忆一下C语言 float sum(float a, float b) { return a + b; } C语言中，所有的变量、表达式、函数都有自己的固定类型，而在Python中，每个变量虽然有自己的类型信息，但变量的类型并不是固定的。 ```python def sum(a, b): return a + b type(sum(1, 2)) # int type(sum(1.2, 2.3)) # float b = 1 type(b) # int b = 1.2 type(b) # float</summary></entry><entry><title type="html">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</title><link href="https://a1q123456.github.io/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/" rel="alternate" type="text/html" title="Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入" /><published>2017-07-21T08:00:00+08:00</published><updated>2017-07-21T08:00:00+08:00</updated><id>https://a1q123456.github.io/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection</id><content type="html" xml:base="https://a1q123456.github.io/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">&lt;h1 id=&quot;什么是依赖注入&quot;&gt;什么是依赖注入&lt;/h1&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;在软件工程中，依赖注入是种实现控制反转用于解决依赖性设计模式。
+  一个依赖关系指的是可被利用的一种对象（即服务提供端）。
+  依赖注入是将所依赖的传递给将使用的从属对象（即客户端）。
+  该服务是将会变成客户端的状态的一部分。
+  传递服务给客户端，而非允许客户端来建立或寻找服务，是本设计模式的基本要求。
+                                                                ——维基百科&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;想象一个类&lt;code class=&quot;highlighter-rouge&quot;&gt;UserRepository&lt;/code&gt;，它的主要功能是：通过&lt;code class=&quot;highlighter-rouge&quot;&gt;ConfigurationManager&lt;/code&gt;读取配置文件并处理配置信息，并结合调用参数，处理结果，并且将处理的结果通过一个&lt;code class=&quot;highlighter-rouge&quot;&gt;MySqlConnection&lt;/code&gt;，向MySQL数据库中插入信息。&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UserRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MySqlConnection&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ConfigurationManager&lt;/span&gt; 
+    
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MySqlConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;localhost&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3306&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;username&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;utf8&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ConfigurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/app.xml&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    
+    
+    &lt;span class=&quot;c&quot;&gt;# ...&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;现在，分析一下这个类的依赖：&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/make-an-ioc-container-step-by-step-1.png&quot; alt=&quot;类依赖图&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;如图，这个类依赖于ConfigurationManager、MySqlConnection两个外部类，如果有上百个这样的类，有一天突然要求不使用MySqlConnection，而换成PostgreSqlConnection，想必改起来会累死的。&lt;/p&gt;
+
+&lt;p&gt;一个类应该只关心自己的内部逻辑，不应该关心怎么从外部获取数据或返回数据到外部。&lt;/p&gt;
+
+&lt;p&gt;现在将依赖结偶，抽象出专门的数据库操作接口 &lt;code class=&quot;highlighter-rouge&quot;&gt;ISqlConnection&lt;/code&gt;，然后基于 &lt;code class=&quot;highlighter-rouge&quot;&gt;ISqlConnection&lt;/code&gt;分别实现 &lt;code class=&quot;highlighter-rouge&quot;&gt;MySqlConnection&lt;/code&gt;、&lt;code class=&quot;highlighter-rouge&quot;&gt;PostgreSqlConnection&lt;/code&gt;。
+再实现一个 &lt;code class=&quot;highlighter-rouge&quot;&gt;ISqlConnectionProvider&lt;/code&gt;，以后每当需要数据库连接，都通过&lt;code class=&quot;highlighter-rouge&quot;&gt;ISqlConnectionProvider&lt;/code&gt;获取数据库连接。
+如果需要改变数据库连接逻辑，只需要改变 &lt;code class=&quot;highlighter-rouge&quot;&gt;ISqlConnectionProvider&lt;/code&gt;的逻辑就可以了&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UserRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ISqlConnection&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IConfigurationManager&lt;/span&gt; 
+    
+    &lt;span class=&quot;n&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ISqlConnectionProvider&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;getConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IConfigurationManagerProvider&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;getConfigurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    
+    
+    &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;...&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h1 id=&quot;什么是ioc-container&quot;&gt;什么是IOC Container&lt;/h1&gt;
+
+&lt;p&gt;&lt;em&gt;IOC(Inverse of Control) Container&lt;/em&gt;依赖倒转容器。经过结偶，&lt;code class=&quot;highlighter-rouge&quot;&gt;UserRepository&lt;/code&gt;类已经很完美了，但是，如果能每次都自动获取依赖，而不需要手动调用Provider，岂不是更方便。&lt;/p&gt;
+
+&lt;p&gt;如果可以通过以下方式，将依赖作为参数，由类的使用者提供，那就更完美了。&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;UserRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ISqlConnection&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IConfigurationManager&lt;/span&gt; 
+    
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ISqlConnection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IConfigurationManager&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sqlConnection&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;configurationManager&lt;/span&gt;
+    
+    &lt;span class=&quot;c&quot;&gt;# ...&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Python 3.5中，已经加入了Type Hinting的支持，因此可以通过获取参数的Type Hinting，获取参数的期望类型。&lt;/p&gt;
+
+&lt;p&gt;如果每一次都由类的使用者提供的话，想必使用者就会产生对很多乱七八糟毫不相干的类的依赖。
+因此，可以通过一个容器，专门管理这些依赖，然后在需要的时候提供给使用者，那就很方便了。&lt;/p&gt;
+
+&lt;p&gt;这样的，可以管理类的依赖关系的容器，就是IOC容器了。实现这样的容器，主要有以下几个步骤。&lt;/p&gt;
+
+&lt;h2 id=&quot;分析依赖&quot;&gt;分析依赖&lt;/h2&gt;
+
+&lt;p&gt;要让依赖可以被外部分析到，最好的办法自然是把所依赖的类作为构造函数的参数。这样外部就可以通过反射等方式，获取参数类型，根据类型，传递所需要的依赖对象。&lt;/p&gt;
+
+&lt;p&gt;因此，常见的分析依赖的方法，就是&lt;em&gt;通过反射，将类所依赖的对象的类型读取出来，然后根据依赖对象的类型，给出相应的依赖对象&lt;/em&gt;。当然，这需要语言特性的支持。&lt;/p&gt;
+
+&lt;h2 id=&quot;依赖注入&quot;&gt;依赖注入&lt;/h2&gt;
+
+&lt;p&gt;把构造函数的所有的参数都准备好后，把参数全部传递给构造函数，自然就可以完成类的构造。
+当使用者需要一个类的时候，只需使用容器来构造类即可。这个过程称为 &lt;em&gt;依赖注入&lt;/em&gt;。&lt;/p&gt;
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;userRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UserRepository&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UserRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ISqlConnectionProvider&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IConfigurationManagerProvider&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+
+&lt;span class=&quot;o&quot;&gt;//&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;vs&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;userRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UserRepository&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;container&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;make&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;UserRepository&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;</content><author><name>Jack Branson</name></author><summary type="html">什么是依赖注入 在软件工程中，依赖注入是种实现控制反转用于解决依赖性设计模式。 一个依赖关系指的是可被利用的一种对象（即服务提供端）。 依赖注入是将所依赖的传递给将使用的从属对象（即客户端）。 该服务是将会变成客户端的状态的一部分。 传递服务给客户端，而非允许客户端来建立或寻找服务，是本设计模式的基本要求。 ——维基百科 想象一个类UserRepository，它的主要功能是：通过ConfigurationManager读取配置文件并处理配置信息，并结合调用参数，处理结果，并且将处理的结果通过一个MySqlConnection，向MySQL数据库中插入信息。 class UserRepository: sqlConnection: MySqlConnection configurationManager: ConfigurationManager def __init__(self): self.sqlConnection = MySqlConnection(&quot;localhost&quot;, 3306, &quot;username&quot;, &quot;password&quot;, &quot;utf8&quot;) self.configurationManager = ConfigurationManager(&quot;/app.xml&quot;) # ... 现在，分析一下这个类的依赖： 如图，这个类依赖于ConfigurationManager、MySqlConnection两个外部类，如果有上百个这样的类，有一天突然要求不使用MySqlConnection，而换成PostgreSqlConnection，想必改起来会累死的。 一个类应该只关心自己的内部逻辑，不应该关心怎么从外部获取数据或返回数据到外部。 现在将依赖结偶，抽象出专门的数据库操作接口 ISqlConnection，然后基于 ISqlConnection分别实现 MySqlConnection、PostgreSqlConnection。 再实现一个 ISqlConnectionProvider，以后每当需要数据库连接，都通过ISqlConnectionProvider获取数据库连接。 如果需要改变数据库连接逻辑，只需要改变 ISqlConnectionProvider的逻辑就可以了 class UserRepository: sqlConnection: ISqlConnection configurationManager: IConfigurationManager def __init__(self): self.sqlConnection = ISqlConnectionProvider.getConnection() self.configurationManager = IConfigurationManagerProvider.getConfigurationManager() # ...</summary></entry><entry><title type="html">ES7、ES8最新特性</title><link href="https://a1q123456.github.io/javascript/2017/07/17/new-features-about-es7-and-es8/" rel="alternate" type="text/html" title="ES7、ES8最新特性" /><published>2017-07-17T08:00:00+08:00</published><updated>2017-07-17T08:00:00+08:00</updated><id>https://a1q123456.github.io/javascript/2017/07/17/new-features-about-es7-and-es8</id><content type="html" xml:base="https://a1q123456.github.io/javascript/2017/07/17/new-features-about-es7-and-es8/">&lt;h2 id=&quot;arrayprototypeincludes&quot;&gt;Array.prototype.includes&lt;/h2&gt;
 
 &lt;p&gt;以后，如果只想知道元素是否在数组当中，可以使用&lt;code class=&quot;highlighter-rouge&quot;&gt;arr.includes(...)&lt;/code&gt;来取代旧的&lt;code class=&quot;highlighter-rouge&quot;&gt;arr.indexOf(...) !== -1&lt;/code&gt;，
 类似于Python中的&lt;code class=&quot;highlighter-rouge&quot;&gt;in&lt;/code&gt;操作符.&lt;/p&gt;
@@ -192,4 +425,4 @@ Object
 &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;async&lt;/code&gt;关键字简化了异步回调的编写模式，可以使用同步的方式写异步代码，并且不容易出错&lt;/p&gt;</content><author><name>Jack Branson</name></author><summary type="html">Array.prototype.includes 以后，如果只想知道元素是否在数组当中，可以使用arr.includes(...)来取代旧的arr.indexOf(...) !== -1， 类似于Python中的in操作符. Array.prototype.indexOf 返回元素在数组中的位置，若不存在，则返回-1。 相比而言，Array.prototype.includes 返回boolean类型，true表示该数组包含此元素，否则为false。</summary></entry></feed>
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;async&lt;/code&gt;关键字简化了异步回调的编写模式，可以使用同步的方式写异步代码，且不易出错&lt;/p&gt;</content><author><name>Jack Branson</name></author><summary type="html">Array.prototype.includes 以后，如果只想知道元素是否在数组当中，可以使用arr.includes(...)来取代旧的arr.indexOf(...) !== -1， 类似于Python中的in操作符. Array.prototype.indexOf 返回元素在数组中的位置，若不存在，则返回-1。 相比而言，Array.prototype.includes 返回boolean类型，true表示该数组包含此元素，否则为false。</summary></entry></feed>
