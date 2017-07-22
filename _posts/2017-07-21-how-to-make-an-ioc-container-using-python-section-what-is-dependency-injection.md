@@ -39,7 +39,7 @@ class UserRepository:
 再实现一个 `ISqlConnectionProvider`，以后每当需要数据库连接，都通过`ISqlConnectionProvider`获取数据库连接。
 如果需要改变数据库连接逻辑，只需要改变 `ISqlConnectionProvider`的逻辑就可以了
 
-```c#
+```python
 class UserRepository:
     sqlConnection: ISqlConnection
     configurationManager: IConfigurationManager 
