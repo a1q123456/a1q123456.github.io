@@ -11,6 +11,7 @@ comments: true
 
 回忆一下C语言
 ```c
+
 float sum(float a, float b)
 {
     return a + b;
@@ -21,6 +22,7 @@ float sum(float a, float b)
 C语言中，所有的变量、表达式、函数都有自己的*固定*类型，而在Python中，每个变量虽然有自己的类型信息，但变量的类型并不是固定的。
 
 ```python
+
 def sum(a, b):  
     return a + b
 

@@ -33,7 +33,7 @@ exclude:
   - Gemfile.lock
 permalink: pretty
 defaults: [{scope: {path: ""}, values: {layout: "post"}}, {scope: {path: "", type: "posts"}, values: {comments: true}}]
-plugins: [jekyll-feed, jekyll-paginate] # include feed plugin (supported by gh-pages)
+plugins: [jekyll-feed, jekyll-paginate, jekyll-sitemap] # include feed plugin (supported by gh-pages)
 timezone: Asia/Shanghai
 
 leancloud:
