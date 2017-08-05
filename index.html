@@ -78,7 +78,8 @@
 <h1 id="什么是type-hinting">什么是Type Hinting</h1>
 
 <p>回忆一下C语言</p>
-<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="nf">sum</span><span class="p">(</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="n">b</span><span class="p">)</span>
+<div class="language-c highlighter-rouge"><pre class="highlight"><code>
+<span class="kt">float</span> <span class="nf">sum</span><span class="p">(</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="n">b</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
 <span class="p">}</span>
@@ -88,8 +89,9 @@
 
 <p>C语言中，所有的变量、表达式、函数都有自己的<em>固定</em>类型，而在Python中，每个变量虽然有自己的类型信息，但变量的类型并不是固定的。</p>
 
-<p>```python
-def sum(a, b):<br />
+<p>```python</p>
+
+<p>def sum(a, b):<br />
     return a + b</p>
 
 <p>type(sum(1, 2))  # int</p>
