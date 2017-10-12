@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="author" content="Jack Branson">
+<meta name="description" content="技术博客，写点技术">
+<title class="title"> Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器 › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="/basic.css" rel="stylesheet">
+<link href="/highlight.css" rel="stylesheet">
+<link href="/index.css" rel="stylesheet">
+<link type="application/atom+xml" rel="alternate" href="https://a1q123456.github.io/feed.xml" title="new TechBlog()" />
+
+
+</head>
+<header>
+  <h1><a href="/">new TechBlog()</a></h1>
+  <nav>
+    <li><a href="/">首页</a></li><li><a href="/categories#Javascript">Javascript</a></li><li><a href="/categories#Python">Python</a></li><li><a href="/archive/">所有文章</a></li><li><a href="/categories/">全部分类</a></li>
+  </nav>
+</header>
+<main>
+  <article class="light">
+    <header>
+      <h2><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/" class="title">Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器</a></h2>
+      <span><time datetime="2017-10-11T08:00:00+08:00">Oct 11, 2017</time> • Python</span>
+      
+        <span id="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/" class="leancloud_visitors" data-flag-title="Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
+    </header>
+    <div>
+<h1 id="service-container">Service Container</h1>
+
+<p>现在，我们已经可以获取服务的依赖关系，但仍然需要一个容器来储存被依赖的服务，然后在需要的时候提供这个服务的实例，这个容器被称为<code class="highlighter-rouge">Service Container</code>。</p>
+
+<p>最基本的容器只需要用一个<code class="highlighter-rouge">list&lt;type&gt;</code>就可以实现，由外部提供类型，并注册到<code class="highlighter-rouge">Service Container</code>中。以后当类依赖一个服务的时候，就可以直接从Service Container中拿出这个服务的实例。</p>
+
+<p>要完成上述操作，必须有一个专门的<code class="highlighter-rouge">Injector</code>，用来分析类的依赖，然后从<code class="highlighter-rouge">Service Container</code>中获取相应的实例，最后提供给构造函数。很显然，<code class="highlighter-rouge">Injector</code>必须与<code class="highlighter-rouge">Service Container</code>相耦合，因此为了方便注入，<code class="highlighter-rouge">Service Container</code>应该提供一个<code class="highlighter-rouge">make_injector</code>方法，为外部提供<code class="highlighter-rouge">Injector</code>，以及<code class="highlighter-rouge">get_service</code>方法，为外部提供相应类型的实例。</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="nb">filter</span>
+
+<span class="k">class</span> <span class="nc">ServiceContainer</span><span class="p">(</span><span class="n">IServiceContainer</span><span class="p">):</span>
+    <span class="n">_type_container</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">register_service</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="n">Type</span><span class="p">):</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">_type_container</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">make_injector</span><span class="p">():</span>
+       <span class="k">return</span> <span class="n">Injector</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_service</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Type</span><span class="p">):</span>
+        <span class="c"># pretend resolving service</span>
+        <span class="n">t_in_container</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type_container</span><span class="p">)</span><span class="o">.</span><span class="nb">next</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">t_in_container</span><span class="p">()</span>
+
+<span class="n">services</span> <span class="o">=</span> <span class="n">ServiceContainer</span><span class="p">()</span>
+<span class="n">services</span><span class="o">.</span><span class="n">register_service</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">injector</span> <span class="o">=</span> <span class="n">services</span><span class="o">.</span><span class="n">make_injector</span><span class="p">()</span>
+<span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+</code></pre>
+</div>
+
+<h1 id="injector">Injector</h1>
+
+<p>有了容器，注入器就可以直接从容器中找到服务，由注入器提供这个服务的实例，并注入到构造函数中。<code class="highlighter-rouge">Injector</code>类提供<code class="highlighter-rouge">inject</code>方法，在<code class="highlighter-rouge">inject</code>方法中，通过<code class="highlighter-rouge">inspect</code>库获得构造函数依赖，然后提供依赖的实例给构造函数，最后创建出类实例。</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="k">class</span> <span class="nc">Injector</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">container</span><span class="p">:</span> <span class="n">IServiceContainer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_container</span> <span class="o">=</span> <span class="n">container</span>
+    
+    <span class="k">def</span> <span class="nf">inject</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Type</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">TParameter</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">annotation</span>
+            <span class="n">obj_parameter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_container</span><span class="o">.</span><span class="n">get_service</span><span class="p">(</span><span class="n">TParameter</span><span class="p">)</span>
+            <span class="n">constructor</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">obj_parameter</span><span class="p">)</span> <span class="c"># using partial() to binding parameter</span>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">()</span>
+
+</code></pre>
+</div>
+
+<h1 id="进一步优化container">进一步优化Container</h1>
+
+<p>上例中，<code class="highlighter-rouge">Container</code>只储存了类型，并没有储存如何实例化类型，我们将在下一节继续研究。</p>
+
+    </div>
+    
+    
+    
+<!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+    
+  </article>
+</main>
+
+
+  <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
+  <a href="javascript: scrollTop()" class="scroll-top"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
+<footer>
+  <p><a href="https://a1q123456.github.io">Jack Branson</a></p>
+  <p class="rights-declaration">本站所有文章禁止转载、摘录，违者将依法追究责任，笔者保留所有权利<br>Reproducing any posts of this site is prohibited. author reserves all rights</p>
+  <p><a href="https://github.com/a1q123456/"><i class="fa fa-github-square"></i></a></p>
+  <p>© <script>document.write(new Date().getFullYear())</script></p>
+</footer>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script src="//cdn.bootcss.com/js-cookie/latest/js.cookie.js"></script>
+  <script>AV.initialize("dRftj6ACMxzGu8NXualu7WNW-gzGzoHsz", "AYBab1rsCFPh4wJns3yW1Qiy");</script>
+  <script>
+    function showHitCount(Counter) {
+      /* 这是给一个页面中有多篇文章时所调用的，例如博客主界面或者存档界面。
+      */
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      // 获取页面中所有文章的id（page.url）
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      // 批量查询
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var hits = item.get('hits');// 获取点击次数
+            var element = document.getElementById(url);
+
+            // 显示点击次数
+            $(element).find(COUNT_CONTAINER_REF).text(hits);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      // 页面（博客文章）中的信息：leancloud_visitors
+      // id为page.url， data-flag-title为page.title
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      // 只根据文章的url查询LeanCloud服务器中的数据
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {//说明LeanCloud中已经记录了这篇文章
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("hits");// 将点击次数加1
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('hits'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            // 执行这里，说明LeanCloud中还没有记录此文章
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);// 把文章标题
+            newcounter.set("url", url); // 文章url
+            newcounter.set("hits", 1); // 初始点击次数：1次
+            newcounter.save(null, { // 上传到LeanCloud服务器中
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('hits'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+    function recordHit()
+    {
+      Cookies.set('/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/', '  ', {expires: 3});
+    }
+
+    function checkRecord()
+    {
+      return typeof Cookies.get('/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/') === 'undefined';
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        if (!checkRecord())
+        {
+          showHitCount(Counter);
+        }
+        else
+        {
+          // in post.html, so add 1 to hit counts
+          addCount(Counter);
+          recordHit();
+        }
+      }
+      else if ($('.post-link').length > 1){
+        // in index.html, there are many 'leancloud_visitors' and 'post-link', so just show hit counts.
+        showHitCount(Counter);
+      }
+    });
+  </script>
+
+<html>

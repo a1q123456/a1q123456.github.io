@@ -3,7 +3,6 @@
   <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta charset="utf-8">
-<meta name="google-site-verification" content="zO1C7ZwmjJyBZPCTu7Lm0t3U8AXIlQ266IADJI5Qe7s" />
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
 <title class="title">new TechBlog()</title>
@@ -24,6 +23,138 @@
 </header>
 <main>
   
+  <article class="light">
+    <header>
+      <h2><a class="post-link" href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/">Python-如何实现一个依赖注入IOC容器 四：Service Provider</a></h2>
+      <span><time datetime="2017-10-11T08:00:00+08:00">Oct 11, 2017</time> • Python</span>
+      
+          <span id="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<p>如图，ElasticSearchService类主要用来提供邮件发送服务，这个类有如下几个依赖：</p>
+
+<ol>
+  <li>string类型的默认索引</li>
+  <li>Uri类型的ElasticSearch节点地址</li>
+  <li>DbContext类型的数据库上下文类</li>
+</ol>
+
+<p>其中，默认索引和节点地址是从配置文件中获取的，数据库上下文类是由<code class="highlighter-rouge">Service Container</code>提供的。</p>
+
+<p>面对上述复杂的依赖，我们必须通过一个类型生成器来专门指导<code class="highlighter-rouge">Service Container</code>如何生成实例，这样的生成器就被成为<code class="highlighter-rouge">Service Provider</code>。</p>
+
+<h1 id="service-provider">Service Provider</h1>
+
+<p>为了不影响服务的核心逻辑，外部参数不应该由服务自己获得，而应该通过参数由<code class="highlighter-rouge">Service Provider</code>提供。</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">ElasticSearchServiceProvider</span><span class="p">(</span><span class="n">IServiceProvider</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">db_context</span><span class="p">:</span> <span class="n">DbContext</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="n">IConfiguration</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_context</span> <span class="o">=</span> <span class="n">db_context</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configuration</span> <span class="o">=</span> <span class="n">configuration</span>
+
+    <span class="k">def</span> <span class="nf">provide</span><span class="p">():</span>
+        <span class="n">default_index</span> <span class="o">=</span> <span class="n">configuration</span><span class="p">[</span><span class="s">"elasticsearch_index"</span><span class="p">]</span>
+        <span class="n">node_uri</span> <span class="o">=</span> <span class="n">configuration</span><span class="p">[</span><span class="s">"elasticsearch_uri"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ElasticSearchService</span><span class="p">(</span><span class="n">default_index</span><span class="p">,</span> <span class="n">node_uri</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_context</span><span class="p">)</span>
+
+</code></pre>
+</div>
+
+<p>上述代码中，<code class="highlighter-rouge">ElasticSearchServiceProvider</code>是一个<code class="highlighter-rouge">Service Provider</code>，他通过构造函数让<code class="highlighter-rouge">Container</code>提供了<code class="highlighter-rouge">DbContext</code>实例，又通过配置文件获取了默认索引和节点地址，生成了<code class="highlighter-rouge">ElasticSearchService</code>类型实例。</p>
+
+<p>接下来，开始修改<code class="highlighter-rouge">Service Container</code>，以便让<code class="highlighter-rouge">Service Container</code>可以通过<code class="highlighter-rouge">Service Provider</code>提供实例。</p>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
+      <h2><a class="post-link" href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/">Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器</a></h2>
+      <span><time datetime="2017-10-11T08:00:00+08:00">Oct 11, 2017</time> • Python</span>
+      
+          <span id="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<h1 id="service-container">Service Container</h1>
+
+<p>现在，我们已经可以获取服务的依赖关系，但仍然需要一个容器来储存被依赖的服务，然后在需要的时候提供这个服务的实例，这个容器被称为<code class="highlighter-rouge">Service Container</code>。</p>
+
+<p>最基本的容器只需要用一个<code class="highlighter-rouge">list&lt;type&gt;</code>就可以实现，由外部提供类型，并注册到<code class="highlighter-rouge">Service Container</code>中。以后当类依赖一个服务的时候，就可以直接从Service Container中拿出这个服务的实例。</p>
+
+<p>要完成上述操作，必须有一个专门的<code class="highlighter-rouge">Injector</code>，用来分析类的依赖，然后从<code class="highlighter-rouge">Service Container</code>中获取相应的实例，最后提供给构造函数。很显然，<code class="highlighter-rouge">Injector</code>必须与<code class="highlighter-rouge">Service Container</code>相耦合，因此为了方便注入，<code class="highlighter-rouge">Service Container</code>应该提供一个<code class="highlighter-rouge">make_injector</code>方法，为外部提供<code class="highlighter-rouge">Injector</code>，以及<code class="highlighter-rouge">get_service</code>方法，为外部提供相应类型的实例。</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="nb">filter</span>
+
+<span class="k">class</span> <span class="nc">ServiceContainer</span><span class="p">(</span><span class="n">IServiceContainer</span><span class="p">):</span>
+    <span class="n">_type_container</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">register_service</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="n">Type</span><span class="p">):</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">_type_container</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">make_injector</span><span class="p">():</span>
+       <span class="k">return</span> <span class="n">Injector</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_service</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Type</span><span class="p">):</span>
+        <span class="c"># pretend resolving service</span>
+        <span class="n">t_in_container</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">==</span> <span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type_container</span><span class="p">)</span><span class="o">.</span><span class="nb">next</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">t_in_container</span><span class="p">()</span>
+
+<span class="n">services</span> <span class="o">=</span> <span class="n">ServiceContainer</span><span class="p">()</span>
+<span class="n">services</span><span class="o">.</span><span class="n">register_service</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">injector</span> <span class="o">=</span> <span class="n">services</span><span class="o">.</span><span class="n">make_injector</span><span class="p">()</span>
+<span class="n">injector</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+</code></pre>
+</div>
+
+<h1 id="injector">Injector</h1>
+
+<p>有了容器，注入器就可以直接从容器中找到服务，由注入器提供这个服务的实例，并注入到构造函数中。<code class="highlighter-rouge">Injector</code>类提供<code class="highlighter-rouge">inject</code>方法，在<code class="highlighter-rouge">inject</code>方法中，通过<code class="highlighter-rouge">inspect</code>库获得构造函数依赖，然后提供依赖的实例给构造函数，最后创建出类实例。</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="k">class</span> <span class="nc">Injector</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="n">container</span><span class="p">:</span> <span class="n">IServiceContainer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_container</span> <span class="o">=</span> <span class="n">container</span>
+    
+    <span class="k">def</span> <span class="nf">inject</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Type</span><span class="p">):</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="n">constructor</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">TParameter</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">annotation</span>
+            <span class="n">obj_parameter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_container</span><span class="o">.</span><span class="n">get_service</span><span class="p">(</span><span class="n">TParameter</span><span class="p">)</span>
+            <span class="n">constructor</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">constructor</span><span class="p">,</span> <span class="n">obj_parameter</span><span class="p">)</span> <span class="c"># using partial() to binding parameter</span>
+        <span class="k">return</span> <span class="n">constructor</span><span class="p">()</span>
+
+</code></pre>
+</div>
+
+<h1 id="进一步优化container">进一步优化Container</h1>
+
+<p>上例中，<code class="highlighter-rouge">Container</code>只储存了类型，并没有储存如何实例化类型，我们将在下一节继续研究。</p>
+
+    </div>
+    <footer>
+      <p></p>
+    </footer>
+  </article>
+
   <article class="light">
     <header>
       <h2><a class="post-link" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></h2>
