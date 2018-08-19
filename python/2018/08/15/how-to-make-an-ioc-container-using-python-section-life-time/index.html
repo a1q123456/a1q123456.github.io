@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title class="title"> 全部分类 › new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/categories/">
+<title class="title"> Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期 › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="/basic.css" rel="stylesheet">
 <link href="/highlight.css" rel="stylesheet">
@@ -24,71 +24,69 @@
 <main>
   <article class="light">
     <header>
-      <h2><a href="/categories/" class="title">全部分类</a></h2>
-      <span></span>
+      <h2><a href="/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/" class="title">Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期</a></h2>
+      <span><time datetime="2018-08-15T08:00:00+08:00">Aug 15, 2018</time> • Python</span>
+      
+        <span id="/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/" class="leancloud_visitors" data-flag-title="Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
     </header>
     <div>
-  
-  <div class="category" id="Javascript">
-    <h3>Javascript</h3>
-    <ul>
-    
-      <li><a href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></li>
-    
+<h1 id="服务的生命周期">服务的生命周期</h1>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="Python">
-    <h3>Python</h3>
-    <ul>
-    
-      <li><a href="/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/">Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/">Python-如何实现一个依赖注入IOC容器 四：Service Provider</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/">Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</a></li>
-    
-      <li><a href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></li>
-    
+<p>服务的生命周期可以分为长期的、短期的、或其他特殊生命周期。服务的生命周期的划分应该由软件的设计者自己决定。一个HTTP框架中，一般会有</p>
+<ul>
+  <li>永久有效的服务（文件系统访问服务、配置管理服务）</li>
+  <li>用完即结束的服务（Model服务、搜索服务）</li>
+  <li>在一个请求内有效的服务（获取表单参数的Request服务）</li>
+</ul>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="C%2B%2B">
-    <h3>C++</h3>
-    <ul>
-    
-      <li><a href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 一、C++ Coroutine</a></li>
-    
+<h1 id="生命周期的控制">生命周期的控制</h1>
 
-    </ul>
-  </div>
-  
+<p>最简单的办法市通过<code class="highlighter-rouge">Service Container</code>控制，为每个<code class="highlighter-rouge">Service</code>配置一种生命周期，然后当这种生命周期类型需要结束的时候，触发生命周期结束的事件，由<code class="highlighter-rouge">Service Container</code>捕获事件并且结束相应生命周期类型的<code class="highlighter-rouge">Service</code>。伪代码如下：</p>
 
-  <script>
-    var hash;
-    if (window.location.hash.length != 0 && (hash = window.location.hash.slice(1)))
-    {
-      var categories = document.querySelectorAll('.category');
-      categories.forEach(function(ele) {
-        if (ele.id != hash)
-        {
-          ele.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('.title').forEach(function(ele) { ele.textContent = decodeURI(hash)});
-    }
+<pre><code class="language-Python">
+class ServiceContainer:
+    services: dict[ELifeTime, list[any]]
 
-  </script>
+    def end_life_time(lifetime: ELifeTime):
+        services.pop(lifetime)
+
+
+# when http session ended
+service_container.end_life_time(ELifeTime.HttpSessionScope)
+
+</code></pre>
+
+<h1 id="总结">总结</h1>
+
+<p>本系列介绍了利用Python实现依赖注入框架的基本原理（Type Hinting），以及依赖注入框架常用的的功能。</p>
 
     </div>
     
     
+    
+<!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
     
   </article>
 </main>
@@ -209,12 +207,12 @@
     }
     function recordHit()
     {
-      Cookies.set('/categories/', '  ', {expires: 3});
+      Cookies.set('/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/', '  ', {expires: 3});
     }
 
     function checkRecord()
     {
-      return typeof Cookies.get('/categories/') === 'undefined';
+      return typeof Cookies.get('/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/') === 'undefined';
     }
 
     $(function() {

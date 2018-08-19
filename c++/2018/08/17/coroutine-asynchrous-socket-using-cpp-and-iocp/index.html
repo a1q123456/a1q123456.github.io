@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title class="title"> 全部分类 › new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/categories/">
+<title class="title"> C++-基于coroutine的异步Socket 一、C++ Coroutine › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="/basic.css" rel="stylesheet">
 <link href="/highlight.css" rel="stylesheet">
@@ -24,71 +24,122 @@
 <main>
   <article class="light">
     <header>
-      <h2><a href="/categories/" class="title">全部分类</a></h2>
-      <span></span>
+      <h2><a href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/" class="title">C++-基于coroutine的异步Socket 一、C++ Coroutine</a></h2>
+      <span><time datetime="2018-08-17T08:00:00+08:00">Aug 17, 2018</time> • C++</span>
+      
+        <span id="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/" class="leancloud_visitors" data-flag-title="C++-基于coroutine的异步Socket 一、C++ Coroutine">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
     </header>
     <div>
-  
-  <div class="category" id="Javascript">
-    <h3>Javascript</h3>
-    <ul>
-    
-      <li><a href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></li>
-    
+<h1 id="coroutine">Coroutine</h1>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="Python">
-    <h3>Python</h3>
-    <ul>
-    
-      <li><a href="/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/">Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/">Python-如何实现一个依赖注入IOC容器 四：Service Provider</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/">Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</a></li>
-    
-      <li><a href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></li>
-    
+<p>Coroutine已经确定将加入C++，很久以前Coroutine的概念在其他语言中已经出现，如C#/JS/Python的async/await。写过异步代码的同学一定见识过<code class="highlighter-rouge">Callback Hell</code>，async/await的出现就是为了避免这样的问题。它可以让异步回调代码看起来像同步代码，但实际上程序执行到await时将返回，不阻塞当前线程。</p>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="C%2B%2B">
-    <h3>C++</h3>
-    <ul>
-    
-      <li><a href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 一、C++ Coroutine</a></li>
-    
+<p>如下伪代码将演示什么是<code class="highlighter-rouge">Callback Hell</code></p>
 
-    </ul>
-  </div>
-  
+<pre><code class="language-C++">
+void s1_callback(error_code ec);
+void c1_callback(error_code ec);
+void s2_callback(error_code ec);
+void c2_callback(error_code ec);
 
-  <script>
-    var hash;
-    if (window.location.hash.length != 0 && (hash = window.location.hash.slice(1)))
+auto s1_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S1_SIZE]);
+auto self = shared_from_this();
+read_async(socket, s1_buffer.get(), s1_buffer.size(), s1_callback);
+
+void s1_callback(error_code ec)
+{
+    // do something
+
+    auto c1 = make_handshake_c1();
+    send_async(socket, c1.get(), c1.size(), c1_callback);
+}
+
+void c1_callback(error_code ec)
+{
+    // do something
+
+    auto s2_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S2_SIZE]);
+    read_async(socket, s1_buffer.get(), s1_buffer.size(), s2_callback);
+}
+
+void s2_callback(error_code ec)
+{
+    // do something
+
+    auto c2 = make_handshake_c2();
+    send_async(socket, c2.get(), c2.size(), c2_callback);
+}
+
+void c2_callback(error_code ec)
+{
+    if (validate(s1, c1, s2, c2))
     {
-      var categories = document.querySelectorAll('.category');
-      categories.forEach(function(ele) {
-        if (ele.id != hash)
-        {
-          ele.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('.title').forEach(function(ele) { ele.textContent = decodeURI(hash)});
+        start_session();
     }
+    else
+    {
+        disconnect();
+    }
+}
 
-  </script>
+</code></pre>
+
+<p>不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：</p>
+
+<pre><code class="language-C++">
+auto s1_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S1_SIZE]);
+auto self = shared_from_this();
+co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+
+auto c1 = make_handshake_c1();
+co_await send_async(socket, c1.get(), c1.size());
+
+auto s2_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S2_SIZE]);
+co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+
+auto c2 = make_handshake_c2();
+co_await send_async(socket, c2.get(), c2.size());
+
+if (validate(s1, c1, s2, c2))
+{
+    start_session();
+}
+else
+{
+    disconnect();
+}
+
+</code></pre>
+
+<p>通过对比两段代码，可以发现，使用了co_await的代码更加易读，C#中的async/await是将<code class="highlighter-rouge">await</code>后面的代码转换为回调函数，本质是一种语法糖，但C++中的<code class="highlighter-rouge">co_await</code>允许用户自己定义await时的行为。下一节会介绍如何定义<code class="highlighter-rouge">co_await</code>时的行为并通过C++ Coroutine实现await</p>
 
     </div>
     
     
+    
+<!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
     
   </article>
 </main>
@@ -209,12 +260,12 @@
     }
     function recordHit()
     {
-      Cookies.set('/categories/', '  ', {expires: 3});
+      Cookies.set('/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/', '  ', {expires: 3});
     }
 
     function checkRecord()
     {
-      return typeof Cookies.get('/categories/') === 'undefined';
+      return typeof Cookies.get('/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/') === 'undefined';
     }
 
     $(function() {
