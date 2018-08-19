@@ -16,7 +16,7 @@ comments: true
 
 最简单的办法市通过`Service Container`控制，为每个`Service`配置一种生命周期，然后当这种生命周期类型需要结束的时候，触发生命周期结束的事件，由`Service Container`捕获事件并且结束相应生命周期类型的`Service`。伪代码如下：
 
-```Python
+```python
 
 class ServiceContainer:
     services: dict[ELifeTime, list[any]]

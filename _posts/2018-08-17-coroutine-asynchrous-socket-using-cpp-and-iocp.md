@@ -11,7 +11,7 @@ Coroutine已经确定将加入C++，很久以前Coroutine的概念在其他语�
 
 如下伪代码将演示什么是`Callback Hell`
 
-```C++
+```c++
 
 void s1_callback(error_code ec);
 void c1_callback(error_code ec);
@@ -62,7 +62,7 @@ void c2_callback(error_code ec)
 
 不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：
 
-```C++
+```c++
 
 auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
 auto self = shared_from_this();
