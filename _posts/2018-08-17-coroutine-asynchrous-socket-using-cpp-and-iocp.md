@@ -1,5 +1,5 @@
 ---
-title:  "C++-如何实现异步Socket 一、C++ Coroutine"
+title:  "C++-基于coroutine的异步Socket 一、C++ Coroutine"
 date:   2018-08-17 00:00:00
 categories: C++
 comments: true
@@ -61,3 +61,31 @@ void c2_callback(error_code ec)
 ```
 
 不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：
+
+```C++
+
+auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
+auto self = shared_from_this();
+co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+
+auto c1 = make_handshake_c1();
+co_await send_async(socket, c1.get(), c1.size());
+
+auto s2_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S2_SIZE]);
+co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+
+auto c2 = make_handshake_c2();
+co_await send_async(socket, c2.get(), c2.size());
+
+if (validate(s1, c1, s2, c2))
+{
+    start_session();
+}
+else
+{
+    disconnect();
+}
+
+```
+
+通过对比两段代码，可以发现，使用了co_await的代码更加易读，C#中的async/await是将`await`后面的代码转换为回调函数，本质是一种语法糖，但C++中的`co_await`允许用户自己定义await时的行为。下一节会介绍如何定义`co_await`时的行为并通过C++ Coroutine实现await
