@@ -20,14 +20,19 @@ void c2_callback(error_code ec);
 
 auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
 auto self = shared_from_this();
-read_async(socket, s1_buffer.get(), s1_buffer.size(), s1_callback);
+
+read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
+    self->s1_callback();
+}});
 
 void s1_callback(error_code ec)
 {
     // do something
 
     auto c1 = make_handshake_c1();
-    send_async(socket, c1.get(), c1.size(), c1_callback);
+    send_async(socket, c1.get(), c1.size(), [=](){
+        self->c1_callback();
+    }});
 }
 
 void c1_callback(error_code ec)
@@ -35,7 +40,9 @@ void c1_callback(error_code ec)
     // do something
 
     auto s2_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S2_SIZE]);
-    read_async(socket, s1_buffer.get(), s1_buffer.size(), s2_callback);
+    read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
+        self->s2_callback();
+    }});
 }
 
 void s2_callback(error_code ec)
@@ -43,7 +50,9 @@ void s2_callback(error_code ec)
     // do something
 
     auto c2 = make_handshake_c2();
-    send_async(socket, c2.get(), c2.size(), c2_callback);
+    send_async(socket, c2.get(), c2.size(), [=](){
+        self->c2_callback();
+    }});
 }
 
 void c2_callback(error_code ec)
@@ -57,22 +66,22 @@ void c2_callback(error_code ec)
         disconnect();
     }
 }
-
 ```
+
 
 不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：
 
 ```c++
 
-auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
-auto self = shared_from_this();
-co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+BYTE s1_buffer[HANDSHAKE_S1_SIZE];
+
+co_await read_async(socket, s1_buffer.get(), sizeof(s1_buffer));
 
 auto c1 = make_handshake_c1();
 co_await send_async(socket, c1.get(), c1.size());
 
-auto s2_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S2_SIZE]);
-co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+BYTE s2_buffer[HANDSHAKE_S2_SIZE]);
+co_await read_async(socket, s2_buffer.get(), sizeof(s2_buffer.size));
 
 auto c2 = make_handshake_c2();
 co_await send_async(socket, c2.get(), c2.size());
