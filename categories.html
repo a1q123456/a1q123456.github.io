@@ -21,7 +21,7 @@ layout: page
     {
       var categories = document.querySelectorAll('.category');
       categories.forEach(function(ele) {
-        if (ele.id != hash)
+        if (ele.id != encodeURIComponent(hash))
         {
           ele.style.display = 'none';
         }
