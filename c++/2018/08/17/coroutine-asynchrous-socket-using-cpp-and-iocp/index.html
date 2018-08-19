@@ -49,33 +49,42 @@
 
 <span class="k">auto</span> <span class="n">s1_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">]);</span>
 <span class="k">auto</span> <span class="n">self</span> <span class="o">=</span> <span class="n">shared_from_this</span><span class="p">();</span>
-<span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s1_callback</span><span class="p">);</span>
+
+<span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+    <span class="n">self</span><span class="o">-&gt;</span><span class="n">s1_callback</span><span class="p">();</span>
+<span class="p">}});</span>
 
 <span class="kt">void</span> <span class="nf">s1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// do something
 </span>
     <span class="k">auto</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">make_handshake_c1</span><span class="p">();</span>
-    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">c1_callback</span><span class="p">);</span>
+    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+        <span class="n">self</span><span class="o">-&gt;</span><span class="n">c1_callback</span><span class="p">();</span>
+    <span class="p">}});</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">c1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">c1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// do something
 </span>
     <span class="k">auto</span> <span class="n">s2_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
-    <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s2_callback</span><span class="p">);</span>
+    <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+        <span class="n">self</span><span class="o">-&gt;</span><span class="n">s2_callback</span><span class="p">();</span>
+    <span class="p">}});</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">s2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">s2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// do something
 </span>
     <span class="k">auto</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">make_handshake_c2</span><span class="p">();</span>
-    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">c2_callback</span><span class="p">);</span>
+    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+        <span class="n">self</span><span class="o">-&gt;</span><span class="n">c2_callback</span><span class="p">();</span>
+    <span class="p">}});</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">c2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">c2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">validate</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">c2</span><span class="p">))</span>
     <span class="p">{</span>
@@ -86,22 +95,21 @@
         <span class="n">disconnect</span><span class="p">();</span>
     <span class="p">}</span>
 <span class="p">}</span>
-
 </code></pre>
 </div>
 
 <p>不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：</p>
 
 <div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
-<span class="k">auto</span> <span class="n">s1_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">]);</span>
-<span class="k">auto</span> <span class="n">self</span> <span class="o">=</span> <span class="n">shared_from_this</span><span class="p">();</span>
-<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="n">BYTE</span> <span class="n">s1_buffer</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">];</span>
+
+<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s1_buffer</span><span class="p">));</span>
 
 <span class="k">auto</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">make_handshake_c1</span><span class="p">();</span>
 <span class="n">co_await</span> <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
 
-<span class="k">auto</span> <span class="n">s2_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
-<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="n">BYTE</span> <span class="n">s2_buffer</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
+<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s2_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s2_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">));</span>
 
 <span class="k">auto</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">make_handshake_c2</span><span class="p">();</span>
 <span class="n">co_await</span> <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>

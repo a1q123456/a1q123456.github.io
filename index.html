@@ -25,6 +25,191 @@
   
   <article class="light">
     <header>
+      <h2><a class="post-link" href="/c++/2018/08/17/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、C++ 实现Coroutine</a></h2>
+      <span><time datetime="2018-08-17T08:00:00+08:00">Aug 17, 2018</time> • C++</span>
+      
+          <span id="/c++/2018/08/17/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<h1 id="promisefuture">Promise/Future</h1>
+
+<p>为了给异步函数提供更加统一规范的回调方式，通常使用Promise/Future来让异步函数通知调用方是否有结果或异常。Promise作为异步函数给调用方的通信端口，拥有设置结果、设置异常的功能；Future作为调用方获取异步结果的端口，拥有获取结果、获取异常的功能。</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="n">future</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">do_something_async</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">promise</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">p</span><span class="p">;</span>
+
+    <span class="n">queue_user_work_item</span><span class="p">([</span><span class="n">p</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">a</span><span class="p">]</span>
+    <span class="p">{</span>
+        <span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="o">::</span><span class="n">chrono_literals</span><span class="p">;</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="n">s</span><span class="p">);</span>
+        <span class="n">p</span><span class="p">.</span><span class="n">set_result</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+    <span class="p">});</span>
+    <span class="k">return</span> <span class="n">p</span><span class="p">.</span><span class="n">get_future</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">auto</span> <span class="n">f</span> <span class="o">=</span> <span class="n">do_something_async</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="c1">/////////////////////////////////////
+</span>
+<span class="c1">// wait result
+</span><span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">f</span><span class="p">.</span><span class="n">ready</span><span class="p">())</span>
+    <span class="p">;</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">has_result</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">result</span><span class="p">());</span>
+<span class="p">}</span>
+<span class="c1">// has exception
+</span><span class="k">else</span>
+<span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="n">f</span><span class="p">.</span><span class="n">rethrow</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">catch</span><span class="p">(</span><span class="k">const</span> <span class="n">exception</span><span class="o">&amp;</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// or
+</span>
+<span class="c1">// use callback
+</span><span class="n">f</span><span class="p">.</span><span class="n">then</span><span class="p">([</span><span class="o">=</span><span class="p">]{</span>
+    <span class="n">print</span><span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">result</span><span class="p">());</span>
+<span class="p">}).</span><span class="k">catch</span><span class="p">([</span><span class="o">=</span><span class="p">]</span> <span class="p">(</span><span class="n">exception_ptr</span> <span class="n">ep</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">try</span>
+    <span class="p">{</span>
+        <span class="n">rethrow</span><span class="p">(</span><span class="n">ep</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">catch</span><span class="p">(</span><span class="k">const</span> <span class="n">exception</span><span class="o">&amp;</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+<span class="c1">/////////////////////////////////////
+</span></code></pre>
+</div>
+
+<h1 id="coroutine-traits">Coroutine Traits</h1>
+
+<p>在C++中，一个带有<code class="highlighter-rouge">co_yield</code>、<code class="highlighter-rouge">co_await</code>、<code class="highlighter-rouge">co_reture</code>语句的函数，会被编译器识别为Coroutine。</p>
+
+<p>因此，runtime必须要知道</p>
+<ul>
+  <li>什么时候需要从当前<code class="highlighter-rouge">Context</code>中切换出来</li>
+  <li>什么时候返回</li>
+  <li>如何获取返回值</li>
+</ul>
+
+<p>这意味着程序必须提供一个桥梁，与runtime进行交互，而这个桥梁就是<code class="highlighter-rouge">coroutine_traits</code>。用户实现<code class="highlighter-rouge">coroutine_traits</code>的特化，让<code class="highlighter-rouge">Promise</code>与runtime适配。</p>
+
+<p>一个完整的<code class="highlighter-rouge">coroutine_traits</code>至少应该这样实现：</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="k">namespace</span> <span class="n">std</span>
+<span class="p">{</span>
+    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+    <span class="k">struct</span> <span class="n">coroutine_traits</span><span class="o">&lt;</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span>
+    <span class="p">{</span>
+        <span class="k">struct</span> <span class="n">promise_type</span>
+        <span class="p">{</span>
+            <span class="n">Promise</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">promise</span><span class="p">;</span>
+
+            <span class="n">Future</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">get_return_object</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">promise</span><span class="p">.</span><span class="n">GetFuture</span><span class="p">());</span>
+            <span class="p">}</span>
+
+            <span class="kt">bool</span> <span class="n">initial_suspend</span><span class="p">()</span> <span class="k">const</span> <span class="k">noexcept</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">bool</span> <span class="n">final_suspend</span><span class="p">()</span> <span class="k">const</span> <span class="k">noexcept</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="c1">////////////////////
+</span>            <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+            <span class="kt">void</span> <span class="n">return_value</span><span class="p">(</span><span class="n">U</span><span class="o">&amp;&amp;</span> <span class="n">value</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">promise</span><span class="p">.</span><span class="n">SetResult</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">U</span><span class="o">&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="c1">// when std::is_smae_v&lt;T, void&gt;
+</span>            <span class="kt">void</span> <span class="n">return_void</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">promise</span><span class="p">.</span><span class="n">SetResult</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="c1">///////////////////
+</span>
+            <span class="kt">void</span> <span class="n">set_exception</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">exception_ptr</span> <span class="n">_Exc</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">promise</span><span class="p">.</span><span class="n">SetException</span><span class="p">(</span><span class="n">_STD</span> <span class="n">move</span><span class="p">(</span><span class="n">_Exc</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>其中<code class="highlighter-rouge">Future</code>类型至少需要这样实现：</p>
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">Future</span>
+<span class="p">{</span>
+    <span class="n">PromiseState</span> <span class="n">_state</span><span class="p">;</span>
+    <span class="n">coroutine_handle</span><span class="o">&lt;&gt;</span> <span class="n">_coroutine</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+
+    <span class="kt">bool</span> <span class="nf">await_ready</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">_state</span><span class="o">-&gt;</span><span class="n">is_ready</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="kt">void</span> <span class="nf">await_suspend</span><span class="p">(</span><span class="n">coroutine_handle</span><span class="o">&lt;&gt;</span> <span class="n">coroutine</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">_state</span><span class="o">-&gt;</span><span class="n">AddDoneCallback</span><span class="p">([</span><span class="o">=</span><span class="p">]()</span>
+        <span class="p">{</span>
+            <span class="n">coroutine</span><span class="p">.</span><span class="n">resume</span><span class="p">();</span>
+        <span class="p">})</span>
+    <span class="p">}</span>
+
+    <span class="n">T</span> <span class="nf">await_resume</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">_state</span><span class="o">-&gt;</span><span class="n">result</span><span class="p">);</span>
+        <span class="c1">// or
+</span>        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="o">~</span><span class="n">Future</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_coroutine</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// close coroutine, cleanup context
+</span>            <span class="n">_coroutine</span><span class="p">.</span><span class="n">destroy</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre>
+</div>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/c++/2018/08/17/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
       <h2><a class="post-link" href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 一、C++ Coroutine</a></h2>
       <span><time datetime="2018-08-17T08:00:00+08:00">Aug 17, 2018</time> • C++</span>
       
@@ -50,33 +235,42 @@
 
 <span class="k">auto</span> <span class="n">s1_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">]);</span>
 <span class="k">auto</span> <span class="n">self</span> <span class="o">=</span> <span class="n">shared_from_this</span><span class="p">();</span>
-<span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s1_callback</span><span class="p">);</span>
+
+<span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+    <span class="n">self</span><span class="o">-&gt;</span><span class="n">s1_callback</span><span class="p">();</span>
+<span class="p">}});</span>
 
 <span class="kt">void</span> <span class="nf">s1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// do something
 </span>
     <span class="k">auto</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">make_handshake_c1</span><span class="p">();</span>
-    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">c1_callback</span><span class="p">);</span>
+    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+        <span class="n">self</span><span class="o">-&gt;</span><span class="n">c1_callback</span><span class="p">();</span>
+    <span class="p">}});</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">c1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">c1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// do something
 </span>
     <span class="k">auto</span> <span class="n">s2_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
-    <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s2_callback</span><span class="p">);</span>
+    <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+        <span class="n">self</span><span class="o">-&gt;</span><span class="n">s2_callback</span><span class="p">();</span>
+    <span class="p">}});</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">s2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">s2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="c1">// do something
 </span>
     <span class="k">auto</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">make_handshake_c2</span><span class="p">();</span>
-    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">c2_callback</span><span class="p">);</span>
+    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="p">[</span><span class="o">=</span><span class="p">](){</span>
+        <span class="n">self</span><span class="o">-&gt;</span><span class="n">c2_callback</span><span class="p">();</span>
+    <span class="p">}});</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">c2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">c2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">validate</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">c2</span><span class="p">))</span>
     <span class="p">{</span>
@@ -87,43 +281,13 @@
         <span class="n">disconnect</span><span class="p">();</span>
     <span class="p">}</span>
 <span class="p">}</span>
-
 </code></pre>
 </div>
 
-<p>不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：</p>
-
-<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
-<span class="k">auto</span> <span class="n">s1_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">]);</span>
-<span class="k">auto</span> <span class="n">self</span> <span class="o">=</span> <span class="n">shared_from_this</span><span class="p">();</span>
-<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-
-<span class="k">auto</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">make_handshake_c1</span><span class="p">();</span>
-<span class="n">co_await</span> <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-
-<span class="k">auto</span> <span class="n">s2_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
-<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-
-<span class="k">auto</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">make_handshake_c2</span><span class="p">();</span>
-<span class="n">co_await</span> <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
-
-<span class="k">if</span> <span class="p">(</span><span class="n">validate</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">c2</span><span class="p">))</span>
-<span class="p">{</span>
-    <span class="n">start_session</span><span class="p">();</span>
-<span class="p">}</span>
-<span class="k">else</span>
-<span class="p">{</span>
-    <span class="n">disconnect</span><span class="p">();</span>
-<span class="p">}</span>
-
-</code></pre>
-</div>
-
-<p>通过对比两段代码，可以发现，使用了co_await的代码更加易读，C#中的async/await是将<code class="highlighter-rouge">await</code>后面的代码转换为回调函数，本质是一种语法糖，但C++中的<code class="highlighter-rouge">co_await</code>允许用户自己定义await时的行为。下一节会介绍如何定义<code class="highlighter-rouge">co_await</code>时的行为并通过C++ Coroutine实现await</p>
 
     </div>
     <footer>
-      <p></p>
+      <p><a class="ghost" href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">阅读更多 »</a></p>
     </footer>
   </article>
 
