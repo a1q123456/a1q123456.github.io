@@ -48,18 +48,19 @@
 
 <p>最简单的办法市通过<code class="highlighter-rouge">Service Container</code>控制，为每个<code class="highlighter-rouge">Service</code>配置一种生命周期，然后当这种生命周期类型需要结束的时候，触发生命周期结束的事件，由<code class="highlighter-rouge">Service Container</code>捕获事件并且结束相应生命周期类型的<code class="highlighter-rouge">Service</code>。伪代码如下：</p>
 
-<pre><code class="language-Python">
-class ServiceContainer:
-    services: dict[ELifeTime, list[any]]
+<div class="language-python highlighter-rouge"><pre class="highlight"><code>
+<span class="k">class</span> <span class="nc">ServiceContainer</span><span class="p">:</span>
+    <span class="n">services</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ELifeTime</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">any</span><span class="p">]]</span>
 
-    def end_life_time(lifetime: ELifeTime):
-        services.pop(lifetime)
+    <span class="k">def</span> <span class="nf">end_life_time</span><span class="p">(</span><span class="n">lifetime</span><span class="p">:</span> <span class="n">ELifeTime</span><span class="p">):</span>
+        <span class="n">services</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">lifetime</span><span class="p">)</span>
 
 
-# when http session ended
-service_container.end_life_time(ELifeTime.HttpSessionScope)
+<span class="c"># when http session ended</span>
+<span class="n">service_container</span><span class="o">.</span><span class="n">end_life_time</span><span class="p">(</span><span class="n">ELifeTime</span><span class="o">.</span><span class="n">HttpSessionScope</span><span class="p">)</span>
 
 </code></pre>
+</div>
 
 <h1 id="总结">总结</h1>
 

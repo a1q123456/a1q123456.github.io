@@ -153,7 +153,7 @@
 
 <p>最简单的办法市通过<code class="highlighter-rouge">Service Container</code>控制，为每个<code class="highlighter-rouge">Service</code>配置一种生命周期，然后当这种生命周期类型需要结束的时候，触发生命周期结束的事件，由<code class="highlighter-rouge">Service Container</code>捕获事件并且结束相应生命周期类型的<code class="highlighter-rouge">Service</code>。伪代码如下：</p>
 
-<p>```Python</p>
+<p>```python</p>
 
 <p>class ServiceContainer:
     services: dict[ELifeTime, list[any]]</p>
