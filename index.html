@@ -42,80 +42,82 @@
 
 <p>如下伪代码将演示什么是<code class="highlighter-rouge">Callback Hell</code></p>
 
-<pre><code class="language-C++">
-void s1_callback(error_code ec);
-void c1_callback(error_code ec);
-void s2_callback(error_code ec);
-void c2_callback(error_code ec);
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="kt">void</span> <span class="n">s1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">c1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">s2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">c2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">);</span>
 
-auto s1_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S1_SIZE]);
-auto self = shared_from_this();
-read_async(socket, s1_buffer.get(), s1_buffer.size(), s1_callback);
+<span class="k">auto</span> <span class="n">s1_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">]);</span>
+<span class="k">auto</span> <span class="n">self</span> <span class="o">=</span> <span class="n">shared_from_this</span><span class="p">();</span>
+<span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s1_callback</span><span class="p">);</span>
 
-void s1_callback(error_code ec)
-{
-    // do something
+<span class="kt">void</span> <span class="nf">s1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// do something
+</span>
+    <span class="k">auto</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">make_handshake_c1</span><span class="p">();</span>
+    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">c1_callback</span><span class="p">);</span>
+<span class="p">}</span>
 
-    auto c1 = make_handshake_c1();
-    send_async(socket, c1.get(), c1.size(), c1_callback);
-}
+<span class="kt">void</span> <span class="nf">c1_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// do something
+</span>
+    <span class="k">auto</span> <span class="n">s2_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
+    <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s2_callback</span><span class="p">);</span>
+<span class="p">}</span>
 
-void c1_callback(error_code ec)
-{
-    // do something
+<span class="kt">void</span> <span class="nf">s2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// do something
+</span>
+    <span class="k">auto</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">make_handshake_c2</span><span class="p">();</span>
+    <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">c2_callback</span><span class="p">);</span>
+<span class="p">}</span>
 
-    auto s2_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S2_SIZE]);
-    read_async(socket, s1_buffer.get(), s1_buffer.size(), s2_callback);
-}
-
-void s2_callback(error_code ec)
-{
-    // do something
-
-    auto c2 = make_handshake_c2();
-    send_async(socket, c2.get(), c2.size(), c2_callback);
-}
-
-void c2_callback(error_code ec)
-{
-    if (validate(s1, c1, s2, c2))
-    {
-        start_session();
-    }
-    else
-    {
-        disconnect();
-    }
-}
+<span class="kt">void</span> <span class="nf">c2_callback</span><span class="p">(</span><span class="n">error_code</span> <span class="n">ec</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">validate</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">c2</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">start_session</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="n">disconnect</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
 
 </code></pre>
+</div>
 
 <p>不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：</p>
 
-<pre><code class="language-C++">
-auto s1_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S1_SIZE]);
-auto self = shared_from_this();
-co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="k">auto</span> <span class="n">s1_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S1_SIZE</span><span class="p">]);</span>
+<span class="k">auto</span> <span class="n">self</span> <span class="o">=</span> <span class="n">shared_from_this</span><span class="p">();</span>
+<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
 
-auto c1 = make_handshake_c1();
-co_await send_async(socket, c1.get(), c1.size());
+<span class="k">auto</span> <span class="n">c1</span> <span class="o">=</span> <span class="n">make_handshake_c1</span><span class="p">();</span>
+<span class="n">co_await</span> <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c1</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c1</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
 
-auto s2_buffer = std::shared_ptr&lt;BYTE[]&gt;(new BYTE[HANDSHAKE_S2_SIZE]);
-co_await read_async(socket, s1_buffer.get(), s1_buffer.size());
+<span class="k">auto</span> <span class="n">s2_buffer</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">BYTE</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="k">new</span> <span class="n">BYTE</span><span class="p">[</span><span class="n">HANDSHAKE_S2_SIZE</span><span class="p">]);</span>
+<span class="n">co_await</span> <span class="n">read_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">s1_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
 
-auto c2 = make_handshake_c2();
-co_await send_async(socket, c2.get(), c2.size());
+<span class="k">auto</span> <span class="n">c2</span> <span class="o">=</span> <span class="n">make_handshake_c2</span><span class="p">();</span>
+<span class="n">co_await</span> <span class="n">send_async</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">c2</span><span class="p">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">c2</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
 
-if (validate(s1, c1, s2, c2))
-{
-    start_session();
-}
-else
-{
-    disconnect();
-}
+<span class="k">if</span> <span class="p">(</span><span class="n">validate</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">c2</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="n">start_session</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">else</span>
+<span class="p">{</span>
+    <span class="n">disconnect</span><span class="p">();</span>
+<span class="p">}</span>
 
 </code></pre>
+</div>
 
 <p>通过对比两段代码，可以发现，使用了co_await的代码更加易读，C#中的async/await是将<code class="highlighter-rouge">await</code>后面的代码转换为回调函数，本质是一种语法糖，但C++中的<code class="highlighter-rouge">co_await</code>允许用户自己定义await时的行为。下一节会介绍如何定义<code class="highlighter-rouge">co_await</code>时的行为并通过C++ Coroutine实现await</p>
 
