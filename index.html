@@ -25,10 +25,115 @@
   
   <article class="light">
     <header>
-      <h2><a class="post-link" href="/c++/2018/08/17/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、C++ 实现Coroutine</a></h2>
-      <span><time datetime="2018-08-17T08:00:00+08:00">Aug 17, 2018</time> • C++</span>
+      <h2><a class="post-link" href="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/">C++-使用C++实现依赖注入框架 一、Parameter Placeholder</a></h2>
+      <span><time datetime="2018-08-26T08:00:00+08:00">Aug 26, 2018</time> • C++</span>
       
-          <span id="/c++/2018/08/17/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/" class="leancloud_visitors" data-flag-title="">
+          <span id="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<p>在其他语言中，我们常用反射机制来实现依赖注入，而C++没有反射，因此，使用C++实现依赖注入就相对麻烦一些了。幸好，我们可以通过元编程来替代反射的功能。</p>
+
+<p>依赖注入最关键的地方在于，获取要注入的类型的构造函数的参数类型，然后再构造这些参数，最后利用这些参数构造要注入的类型。</p>
+
+<p>C++中显然不能直接的获取某个类型的构造函数的参数类型，但是，我们可以通过类型转换来间接的获取。当构造对象或调用函数的时候，编译器会自动尝试将类型不匹配的参数转换为目标类型。假如调用构造对象时，我们让一个类型可以自动转换到所有需要的构造函数参数的类型，那就实现了依赖注入中获取构造函数参数类型的这一步了，示例代码如下：</p>
+
+<p>```c++</p>
+
+<p>struct A
+{
+    A(int, bool, double, int)
+    {</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>} };
+</code></pre>
+</div>
+
+<p>// 调用构造函数
+A a(1, true, 1.2, 3);</p>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
+      <h2><a class="post-link" href="/c++/2018/08/26/iocp-api-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、关于Socket的IOCP API</a></h2>
+      <span><time datetime="2018-08-26T08:00:00+08:00">Aug 26, 2018</time> • C++</span>
+      
+          <span id="/c++/2018/08/26/iocp-api-asynchrous-socket-using-cpp-and-iocp/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<p>Windows中很多与IO相关的API，都允许传入Overlapped参数，这些允许传入Overlapped参数的函数一般都支持IOCP。本文只介绍与Socket相关的API。</p>
+
+<p>在介绍IOCP的异步函数之前，有必要先介绍一下Windows API中的几个线程池函数，这些函数对实现IOCP的回调很有帮助。</p>
+
+<p>通过IOCP实现异步Socket的逻辑在于：首先，启动IO线程池，并绑定到Socket上，然后，启动异步IO操作，最后，当异步操作完成时，由IO线程池进行回调。因此，首先需要建立IO回调线程池。</p>
+
+<h1 id="createthreadpoolio">CreateThreadpoolIo</h1>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="n">PTP_IO</span> <span class="n">CreateThreadpoolIo</span><span class="p">(</span>
+  <span class="n">HANDLE</span>                <span class="n">fl</span><span class="p">,</span>
+  <span class="n">PTP_WIN32_IO_CALLBACK</span> <span class="n">pfnio</span><span class="p">,</span>
+  <span class="n">PVOID</span>                 <span class="n">pv</span><span class="p">,</span>
+  <span class="n">PTP_CALLBACK_ENVIRON</span>  <span class="n">pcbe</span>
+<span class="p">);</span>
+
+</code></pre>
+</div>
+
+<p>该函数的文档，可以在<a href="https://docs.microsoft.com/en-us/windows/desktop/api/threadpoolapiset/nf-threadpoolapiset-createthreadpoolio">这个页面上找到</a></p>
+
+<p>用户通过调用这个函数来创建IO线程池。其中，<code class="highlighter-rouge">f1</code>参数就是IO对象（File Handle、 Socket等，这些对象对于内核来说没有区别），<code class="highlighter-rouge">pfnio</code>是回调函数，<code class="highlighter-rouge">pv</code>是可以用来传递某些用户数据，<code class="highlighter-rouge">pcbe</code>是线程池环境。</p>
+
+<p>示例：</p>
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="k">auto</span> <span class="n">_io</span> <span class="o">=</span> <span class="n">CreateThreadpoolIo</span><span class="p">((</span><span class="n">HANDLE</span><span class="p">)</span><span class="n">socket</span><span class="p">,</span> <span class="n">IoCallback</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="nb">nullptr</span><span class="p">);</span>
+
+</code></pre>
+</div>
+<p>其中，IoCallback的Prototype为：</p>
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="n">WINAPI</span> <span class="n">IoCallback</span><span class="p">(</span>
+	<span class="n">_Inout_</span>     <span class="n">PTP_CALLBACK_INSTANCE</span> <span class="n">Instance</span><span class="p">,</span>
+	<span class="n">_Inout_opt_</span> <span class="n">PVOID</span>                 <span class="n">Context</span><span class="p">,</span>
+	<span class="n">_Inout_opt_</span> <span class="n">PVOID</span>                 <span class="n">Overlapped</span><span class="p">,</span>
+	<span class="n">_In_</span>        <span class="n">ULONG</span>                 <span class="n">IoResult</span><span class="p">,</span>
+	<span class="n">_In_</span>        <span class="n">ULONG_PTR</span>             <span class="n">NumberOfBytesTransferred</span><span class="p">,</span>
+	<span class="n">_Inout_</span>     <span class="n">PTP_IO</span>                <span class="n">Io</span>
+<span class="p">)</span>
+
+</code></pre>
+</div>
+<p>关于该函数的详细文档，可以查阅<a href="https://msdn.microsoft.com/en-us/50515cec-8359-48a2-a85b-b4382c88107c">这个页面</a>。</p>
+
+<p>用户定义这样的函数，并作为pfnio参数传递给CreateThreadPoolIO，就可以注册为IO操作的回调函数。其中，Instance参数用来传递给其他IO函数；Context参数就是之前的pv参数；Overlapped就是进行IO操作时，传递的LPOVERLAPPED指针；IoResult是系统错误代码，0表示成功，其他的值表示失败的代码，可以通过查阅<a href="https://docs.microsoft.com/en-us/windows/desktop/Debug/system-error-codes">这个页面</a>，或通过<code class="highlighter-rouge">FormatMessage</code>函数来获取详细信息。</p>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/c++/2018/08/26/iocp-api-asynchrous-socket-using-cpp-and-iocp/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
+      <h2><a class="post-link" href="/c++/2018/08/19/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、实现Coroutine</a></h2>
+      <span><time datetime="2018-08-19T08:00:00+08:00">Aug 19, 2018</time> • C++</span>
+      
+          <span id="/c++/2018/08/19/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/" class="leancloud_visitors" data-flag-title="">
           <span class="post-meta-divider">|</span>
           <span class="post-meta-item-text"> 阅读量:  </span>
           <span class="leancloud-visitors-count"></span>
@@ -204,7 +309,7 @@
 
     </div>
     <footer>
-      <p><a class="ghost" href="/c++/2018/08/17/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">阅读更多 »</a></p>
+      <p><a class="ghost" href="/c++/2018/08/19/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">阅读更多 »</a></p>
     </footer>
   </article>
 
@@ -626,35 +731,13 @@
     </footer>
   </article>
 
-  <article class="light">
-    <header>
-      <h2><a class="post-link" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></h2>
-      <span><time datetime="2017-07-17T08:00:00+08:00">Jul 17, 2017</time> • Javascript</span>
-      
-          <span id="/javascript/2017/07/17/new-features-about-es7-and-es8/" class="leancloud_visitors" data-flag-title="">
-          <span class="post-meta-divider">|</span>
-          <span class="post-meta-item-text"> 阅读量:  </span>
-          <span class="leancloud-visitors-count"></span>
-          </span>
-      
-    </header>
-    <div>
-<h2 id="arrayprototypeincludes">Array.prototype.includes</h2>
-
-<p>以后，如果只想知道元素是否在数组当中，可以使用<code class="highlighter-rouge">arr.includes(...)</code>来取代旧的<code class="highlighter-rouge">arr.indexOf(...) !== -1</code>，
-类似于Python中的<code class="highlighter-rouge">in</code>操作符.</p>
-
-<p><code class="highlighter-rouge">Array.prototype.indexOf</code> 返回元素在数组中的位置，若不存在，则返回<code class="highlighter-rouge">-1</code>。
-相比而言，<code class="highlighter-rouge">Array.prototype.includes</code> 返回<code class="highlighter-rouge">boolean</code>类型，<code class="highlighter-rouge">true</code>表示该数组包含此元素，否则为<code class="highlighter-rouge">false</code>。</p>
-
-
-    </div>
-    <footer>
-      <p><a class="ghost" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">阅读更多 »</a></p>
-    </footer>
-  </article>
-
 </main>
+
+<footer id="paginate">
+    <span>« newer posts</span>
+    <span>page 1 of 2</span>
+    <a href="/page2">older posts »</a>
+</footer>
 
 
 

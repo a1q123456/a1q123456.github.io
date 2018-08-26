@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title class="title"> 全部分类 › new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/categories/">
+<title class="title"> C++-使用C++实现依赖注入框架 一、Parameter Placeholder › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="/basic.css" rel="stylesheet">
 <link href="/highlight.css" rel="stylesheet">
@@ -24,77 +24,79 @@
 <main>
   <article class="light">
     <header>
-      <h2><a href="/categories/" class="title">全部分类</a></h2>
-      <span></span>
+      <h2><a href="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/" class="title">C++-使用C++实现依赖注入框架 一、Parameter Placeholder</a></h2>
+      <span><time datetime="2018-08-26T08:00:00+08:00">Aug 26, 2018</time> • C++</span>
+      
+        <span id="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/" class="leancloud_visitors" data-flag-title="C++-使用C++实现依赖注入框架 一、Parameter Placeholder">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
     </header>
     <div>
-  
-  <div class="category" id="Javascript">
-    <h3>Javascript</h3>
-    <ul>
-    
-      <li><a href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></li>
-    
+<p>在其他语言中，我们常用反射机制来实现依赖注入，而C++没有反射，因此，使用C++实现依赖注入就相对麻烦一些了。幸好，我们可以通过元编程来替代反射的功能。</p>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="Python">
-    <h3>Python</h3>
-    <ul>
-    
-      <li><a href="/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/">Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/">Python-如何实现一个依赖注入IOC容器 四：Service Provider</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/">Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</a></li>
-    
-      <li><a href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></li>
-    
+<p>依赖注入最关键的地方在于，获取要注入的类型的构造函数的参数类型，然后再构造这些参数，最后利用这些参数构造要注入的类型。</p>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="C%2B%2B">
-    <h3>C++</h3>
-    <ul>
-    
-      <li><a href="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/">C++-使用C++实现依赖注入框架 一、Parameter Placeholder</a></li>
-    
-      <li><a href="/c++/2018/08/26/iocp-api-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、关于Socket的IOCP API</a></li>
-    
-      <li><a href="/c++/2018/08/19/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、实现Coroutine</a></li>
-    
-      <li><a href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 一、C++ Coroutine</a></li>
-    
+<p>C++中显然不能直接的获取某个类型的构造函数的参数类型，但是，我们可以通过类型转换来间接的获取。当构造对象或调用函数的时候，编译器会自动尝试将类型不匹配的参数转换为目标类型。假如调用构造对象时，我们让一个类型可以自动转换到所有需要的构造函数参数的类型，那就实现了依赖注入中获取构造函数参数类型的这一步了，示例代码如下：</p>
 
-    </ul>
-  </div>
-  
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="k">struct</span> <span class="n">A</span>
+<span class="p">{</span>
+    <span class="n">A</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="p">,</span> <span class="kt">double</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span>
+    <span class="p">{</span>
 
-  <script>
-    var hash;
-    if (window.location.hash.length != 0 && (hash = window.location.hash.slice(1)))
-    {
-      var categories = document.querySelectorAll('.category');
-      categories.forEach(function(ele) {
-        if (ele.id != encodeURIComponent(hash))
-        {
-          ele.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('.title').forEach(function(ele) { ele.textContent = decodeURI(hash)});
-    }
+    <span class="p">}</span>
+<span class="p">};</span>
 
-  </script>
+<span class="c1">// 调用构造函数
+</span><span class="n">A</span> <span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">true</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mi">3</span><span class="p">);</span> 
+
+
+<span class="k">struct</span> <span class="n">PlaceHolder</span>
+<span class="p">{</span>
+    <span class="c1">// 使用模板，让PlaceHolder可以转换为任意类型
+</span>    <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span>  <span class="n">T</span><span class="o">&gt;</span>
+    <span class="k">operator</span> <span class="n">T</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">// 先暂时通过T类型的默认构造函数构造T类型的对象
+</span>        <span class="k">return</span> <span class="n">T</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">PlaceHolder</span> <span class="n">p</span><span class="p">;</span>
+
+<span class="c1">// 依然可以构造，编译器会自动调用 operator T，将PlaceHolder类型转换为T类型
+</span><span class="n">A</span> <span class="n">a</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">);</span>
+
+</code></pre>
+</div>
+
+<p>这样一来，依赖注入的第一步，获取构造函数的类型，就实现完成了。当需要注入一个类型的时候，只要给这个类型传入符合参数个数的PlaceHolder类型，就可以完成依赖的注入了。</p>
 
     </div>
     
     
+    
+<!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
     
   </article>
 </main>
@@ -215,12 +217,12 @@
     }
     function recordHit()
     {
-      Cookies.set('/categories/', '  ', {expires: 3});
+      Cookies.set('/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/', '  ', {expires: 3});
     }
 
     function checkRecord()
     {
-      return typeof Cookies.get('/categories/') === 'undefined';
+      return typeof Cookies.get('/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/') === 'undefined';
     }
 
     $(function() {

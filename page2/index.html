@@ -5,8 +5,8 @@
 <meta charset="utf-8">
 <meta name="author" content="Jack Branson">
 <meta name="description" content="技术博客，写点技术">
-<title class="title"> 全部分类 › new TechBlog()</title>
-<link rel="canonical" href="https://a1q123456.github.io/categories/">
+<title class="title">new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/page2/">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 <link href="/basic.css" rel="stylesheet">
 <link href="/highlight.css" rel="stylesheet">
@@ -22,82 +22,43 @@
   </nav>
 </header>
 <main>
+  
   <article class="light">
     <header>
-      <h2><a href="/categories/" class="title">全部分类</a></h2>
-      <span></span>
+      <h2><a class="post-link" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></h2>
+      <span><time datetime="2017-07-17T08:00:00+08:00">Jul 17, 2017</time> • Javascript</span>
+      
+          <span id="/javascript/2017/07/17/new-features-about-es7-and-es8/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
     </header>
     <div>
-  
-  <div class="category" id="Javascript">
-    <h3>Javascript</h3>
-    <ul>
-    
-      <li><a href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></li>
-    
+<h2 id="arrayprototypeincludes">Array.prototype.includes</h2>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="Python">
-    <h3>Python</h3>
-    <ul>
-    
-      <li><a href="/python/2018/08/15/how-to-make-an-ioc-container-using-python-section-life-time/">Python-如何实现一个依赖注入IOC容器 五：控制服务的生命周期</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-service-provider/">Python-如何实现一个依赖注入IOC容器 四：Service Provider</a></li>
-    
-      <li><a href="/python/2017/10/11/how-to-make-an-ioc-container-using-python-section-simple-container/">Python-如何实现一个依赖注入IOC容器 四：最简单的服务容器</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-using-python-inspect-module-to-get-function-signature/">Python-如何实现一个依赖注入IOC容器 三：通过inspect模块获取函数签名</a></li>
-    
-      <li><a href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</a></li>
-    
-      <li><a href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></li>
-    
+<p>以后，如果只想知道元素是否在数组当中，可以使用<code class="highlighter-rouge">arr.includes(...)</code>来取代旧的<code class="highlighter-rouge">arr.indexOf(...) !== -1</code>，
+类似于Python中的<code class="highlighter-rouge">in</code>操作符.</p>
 
-    </ul>
-  </div>
-  
-  <div class="category" id="C%2B%2B">
-    <h3>C++</h3>
-    <ul>
-    
-      <li><a href="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/">C++-使用C++实现依赖注入框架 一、Parameter Placeholder</a></li>
-    
-      <li><a href="/c++/2018/08/26/iocp-api-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、关于Socket的IOCP API</a></li>
-    
-      <li><a href="/c++/2018/08/19/implement-coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 二、实现Coroutine</a></li>
-    
-      <li><a href="/c++/2018/08/17/coroutine-asynchrous-socket-using-cpp-and-iocp/">C++-基于coroutine的异步Socket 一、C++ Coroutine</a></li>
-    
+<p><code class="highlighter-rouge">Array.prototype.indexOf</code> 返回元素在数组中的位置，若不存在，则返回<code class="highlighter-rouge">-1</code>。
+相比而言，<code class="highlighter-rouge">Array.prototype.includes</code> 返回<code class="highlighter-rouge">boolean</code>类型，<code class="highlighter-rouge">true</code>表示该数组包含此元素，否则为<code class="highlighter-rouge">false</code>。</p>
 
-    </ul>
-  </div>
-  
-
-  <script>
-    var hash;
-    if (window.location.hash.length != 0 && (hash = window.location.hash.slice(1)))
-    {
-      var categories = document.querySelectorAll('.category');
-      categories.forEach(function(ele) {
-        if (ele.id != encodeURIComponent(hash))
-        {
-          ele.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('.title').forEach(function(ele) { ele.textContent = decodeURI(hash)});
-    }
-
-  </script>
 
     </div>
-    
-    
-    
+    <footer>
+      <p><a class="ghost" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">阅读更多 »</a></p>
+    </footer>
   </article>
+
 </main>
+
+<footer id="paginate">
+    <a href="/">« newer posts</a>
+    <span>page 2 of 2</span>
+    <span>older posts »</span>
+</footer>
+
 
 
   <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
@@ -215,12 +176,12 @@
     }
     function recordHit()
     {
-      Cookies.set('/categories/', '  ', {expires: 3});
+      Cookies.set('/page2/', '  ', {expires: 3});
     }
 
     function checkRecord()
     {
-      return typeof Cookies.get('/categories/') === 'undefined';
+      return typeof Cookies.get('/page2/') === 'undefined';
     }
 
     $(function() {
