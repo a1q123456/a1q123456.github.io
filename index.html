@@ -25,6 +25,93 @@
   
   <article class="light">
     <header>
+      <h2><a class="post-link" href="/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/">C++-使用C++实现依赖注入框架 二、Parameter Counter</a></h2>
+      <span><time datetime="2018-08-28T08:00:00+08:00">Aug 28, 2018</time> • C++</span>
+      
+          <span id="/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<p>要实现依赖注入，就必须获取要注入的类型的构造函数的参数类型以及参数个数。上一篇文章已经解决了获取参数类型的问题，现在，该研究如何获取参数个数了。</p>
+
+<p>参数分为可选参数和必填参数，在C++中，带有默认参数的参数是可选参数，没有默认参数的参数是必填参数。那么，如何在没有反射的情况下准确的获取参数个数呢？</p>
+
+<p>答案是不能。</p>
+
+<p>想在没有反射的情况下获取参数个数，唯一的办法就是使用不同的参数个数去尝试构造。这样的弊端在于，假如一个类型的构造函数有默认参数，或参数个数超过了尝试的上限，那么这样的办法就不能准确的获取参数个数了。</p>
+
+<p>为了测试一个类型能否被制定的参数构造，我们需要使用std::is_constructible</p>
+
+<h1 id="stdis_constructiblet-args">std::is_constructible&lt;T, Args…&gt;</h1>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">A</span>
+<span class="p">{</span>
+    <span class="n">A</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">}</span>
+
+<span class="c1">// yes
+</span><span class="k">static_assert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="s">"constructible"</span><span class="p">);</span> 
+</code></pre>
+</div>
+
+<p>截至目前，我们已经可以<em>判断</em>一个类型能否被指定的参数个数构造以及每个参数的类型，下一个问题就在于如何准确的<em>获取</em>一个类型能被几个参数所构造，解决方案就是：<code class="highlighter-rouge">模板递归</code></p>
+
+<p>先撇开模板元编程，将问题简化。首先需要通过一个循环去判断一个类型能否被指定数量<em>N</em>的参数构造，如果不行，则<em>N + 1</em>，直到N等于最大参数个数为止。</p>
+
+<p>伪代码如下：</p>
+
+<h2 id="step-1">Step 1</h2>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="cp">#define MAX_PARAMETER_COUNT 10
+</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// 尝试用i个PlaceHolder类型构造
+</span>        <span class="k">if</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="p">...</span><span class="n">i</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">static_assert</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>以上代码当然不可能工作，但是，只要经过函数式编程的思维改造为模板递归，就可以工作。</p>
+
+<h2 id="step2">Step2:</h2>
+
+<p>```c++
+#define MAX_PARAMETER_COUNT 10</p>
+
+<p>// 无实际用处的I参数
+template<size_t I="">
+struct PlaceHolder
+{
+	template <typename T="">
+	operator T()
+	{
+		return T();
+	}
+};</typename></size_t></p>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
       <h2><a class="post-link" href="/c++/2018/08/26/parameter-placeholder-make-an-ioc-framework-in-c++/">C++-使用C++实现依赖注入框架 一、Parameter Placeholder</a></h2>
       <span><time datetime="2018-08-26T08:00:00+08:00">Aug 26, 2018</time> • C++</span>
       
@@ -658,76 +745,6 @@ A a(1, true, 1.2, 3);</p>
     </div>
     <footer>
       <p><a class="ghost" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">阅读更多 »</a></p>
-    </footer>
-  </article>
-
-  <article class="light">
-    <header>
-      <h2><a class="post-link" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></h2>
-      <span><time datetime="2017-07-21T08:00:00+08:00">Jul 21, 2017</time> • Python</span>
-      
-          <span id="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/" class="leancloud_visitors" data-flag-title="">
-          <span class="post-meta-divider">|</span>
-          <span class="post-meta-item-text"> 阅读量:  </span>
-          <span class="leancloud-visitors-count"></span>
-          </span>
-      
-    </header>
-    <div>
-<h1 id="什么是依赖注入">什么是依赖注入</h1>
-<blockquote>
-  <p>在软件工程中，依赖注入是种实现控制反转用于解决依赖性设计模式。
-  一个依赖关系指的是可被利用的一种对象（即服务提供端）。
-  依赖注入是将所依赖的传递给将使用的从属对象（即客户端）。
-  该服务是将会变成客户端的状态的一部分。
-  传递服务给客户端，而非允许客户端来建立或寻找服务，是本设计模式的基本要求。
-                                                                ——维基百科</p>
-</blockquote>
-
-<p>想象一个类<code class="highlighter-rouge">UserRepository</code>，它的主要功能是：通过<code class="highlighter-rouge">ConfigurationManager</code>读取配置文件并处理配置信息，并结合调用参数，处理结果，并且将处理的结果通过一个<code class="highlighter-rouge">MySqlConnection</code>，向MySQL数据库中插入信息。</p>
-<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
-    <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">MySqlConnection</span>
-    <span class="n">configurationManager</span><span class="p">:</span> <span class="n">ConfigurationManager</span> 
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sqlConnection</span> <span class="o">=</span> <span class="n">MySqlConnection</span><span class="p">(</span><span class="s">"localhost"</span><span class="p">,</span> <span class="mi">3306</span><span class="p">,</span> <span class="s">"username"</span><span class="p">,</span> <span class="s">"password"</span><span class="p">,</span> <span class="s">"utf8"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">configurationManager</span> <span class="o">=</span> <span class="n">ConfigurationManager</span><span class="p">(</span><span class="s">"/app.xml"</span><span class="p">)</span>
-    
-    
-    <span class="c"># ...</span>
-
-</code></pre>
-</div>
-<p>现在，分析一下这个类的依赖：</p>
-
-<p><img src="/images/make-an-ioc-container-step-by-step-1.png" alt="类依赖图" /></p>
-
-<p>如图，这个类依赖于ConfigurationManager、MySqlConnection两个外部类，如果有上百个这样的类，有一天突然要求不使用MySqlConnection，而换成PostgreSqlConnection，想必改起来会累死的。</p>
-
-<p>一个类应该只关心自己的内部逻辑，不应该关心怎么从外部获取数据或返回数据到外部。</p>
-
-<p>现在将依赖结偶，抽象出专门的数据库操作接口 <code class="highlighter-rouge">ISqlConnection</code>，然后基于 <code class="highlighter-rouge">ISqlConnection</code>分别实现 <code class="highlighter-rouge">MySqlConnection</code>、<code class="highlighter-rouge">PostgreSqlConnection</code>。
-再实现一个 <code class="highlighter-rouge">ISqlConnectionProvider</code>，以后每当需要数据库连接，都通过<code class="highlighter-rouge">ISqlConnectionProvider</code>获取数据库连接。
-如果需要改变数据库连接逻辑，只需要改变 <code class="highlighter-rouge">ISqlConnectionProvider</code>的逻辑就可以了</p>
-
-<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
-    <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">ISqlConnection</span>
-    <span class="n">configurationManager</span><span class="p">:</span> <span class="n">IConfigurationManager</span> 
-    
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sqlConnection</span> <span class="o">=</span> <span class="n">ISqlConnectionProvider</span><span class="o">.</span><span class="n">getConnection</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">configurationManager</span> <span class="o">=</span> <span class="n">IConfigurationManagerProvider</span><span class="o">.</span><span class="n">getConfigurationManager</span><span class="p">()</span>
-    
-    
-    <span class="c"># ...</span>
-
-</code></pre>
-</div>
-
-
-    </div>
-    <footer>
-      <p><a class="ghost" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">阅读更多 »</a></p>
     </footer>
   </article>
 

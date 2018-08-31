@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="author" content="Jack Branson">
+<meta name="description" content="技术博客，写点技术">
+<title class="title"> C++-使用C++实现依赖注入框架 二、Parameter Counter › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="/basic.css" rel="stylesheet">
+<link href="/highlight.css" rel="stylesheet">
+<link href="/index.css" rel="stylesheet">
+<link type="application/atom+xml" rel="alternate" href="https://a1q123456.github.io/feed.xml" title="new TechBlog()" />
+
+
+</head>
+<header>
+  <h1><a href="/">new TechBlog()</a></h1>
+  <nav>
+    <li><a href="/">首页</a></li><li><a href="/categories#Javascript">Javascript</a></li><li><a href="/categories#Python">Python</a></li><li><a href="/categories#C++">C++</a></li><li><a href="/archive/">所有文章</a></li><li><a href="/categories/">全部分类</a></li>
+  </nav>
+</header>
+<main>
+  <article class="light">
+    <header>
+      <h2><a href="/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/" class="title">C++-使用C++实现依赖注入框架 二、Parameter Counter</a></h2>
+      <span><time datetime="2018-08-28T08:00:00+08:00">Aug 28, 2018</time> • C++</span>
+      
+        <span id="/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/" class="leancloud_visitors" data-flag-title="C++-使用C++实现依赖注入框架 二、Parameter Counter">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
+    </header>
+    <div>
+<p>要实现依赖注入，就必须获取要注入的类型的构造函数的参数类型以及参数个数。上一篇文章已经解决了获取参数类型的问题，现在，该研究如何获取参数个数了。</p>
+
+<p>参数分为可选参数和必填参数，在C++中，带有默认参数的参数是可选参数，没有默认参数的参数是必填参数。那么，如何在没有反射的情况下准确的获取参数个数呢？</p>
+
+<p>答案是不能。</p>
+
+<p>想在没有反射的情况下获取参数个数，唯一的办法就是使用不同的参数个数去尝试构造。这样的弊端在于，假如一个类型的构造函数有默认参数，或参数个数超过了尝试的上限，那么这样的办法就不能准确的获取参数个数了。</p>
+
+<p>为了测试一个类型能否被制定的参数构造，我们需要使用std::is_constructible</p>
+
+<h1 id="stdis_constructiblet-args">std::is_constructible&lt;T, Args…&gt;</h1>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">A</span>
+<span class="p">{</span>
+    <span class="n">A</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">}</span>
+
+<span class="c1">// yes
+</span><span class="k">static_assert</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">A</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">,</span> <span class="s">"constructible"</span><span class="p">);</span> 
+</code></pre>
+</div>
+
+<p>截至目前，我们已经可以<em>判断</em>一个类型能否被指定的参数个数构造以及每个参数的类型，下一个问题就在于如何准确的<em>获取</em>一个类型能被几个参数所构造，解决方案就是：<code class="highlighter-rouge">模板递归</code></p>
+
+<p>先撇开模板元编程，将问题简化。首先需要通过一个循环去判断一个类型能否被指定数量<em>N</em>的参数构造，如果不行，则<em>N + 1</em>，直到N等于最大参数个数为止。</p>
+
+<p>伪代码如下：</p>
+
+<h2 id="step-1">Step 1</h2>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="cp">#define MAX_PARAMETER_COUNT 10
+</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// 尝试用i个PlaceHolder类型构造
+</span>        <span class="k">if</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="p">...</span><span class="n">i</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">static_assert</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>以上代码当然不可能工作，但是，只要经过函数式编程的思维改造为模板递归，就可以工作。</p>
+
+<h2 id="step2">Step2:</h2>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="cp">#define MAX_PARAMETER_COUNT 10
+</span>
+<span class="c1">// 无实际用处的I参数
+</span><span class="k">template</span><span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">PlaceHolder</span>
+<span class="p">{</span>
+	<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span>  <span class="n">T</span><span class="o">&gt;</span>
+	<span class="k">operator</span> <span class="n">T</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="k">return</span> <span class="n">T</span><span class="p">();</span>
+	<span class="p">}</span>
+<span class="p">};</span>
+
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">N</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">N</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">N</span> <span class="o">==</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">static_assert</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">get_parameter_count</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>首先，改造<code class="highlighter-rouge">PlaceHolder</code>类型，让它接受一个<code class="highlighter-rouge">size_t</code>类型的模板参数，这个参数不起到实际作用，只是用来扩展参数包。然后通过<code class="highlighter-rouge">0if constexpr</code>判断是否能被指定参数个数构造。</p>
+
+<p>以上代码可以在C++17中工作，并且不是<code class="highlighter-rouge">constexpr</code>的函数，不过，<code class="highlighter-rouge">if constexpr</code>语句只是一种语法糖而已，我们可以进一步改造为更通用的代码：</p>
+
+<h2 id="step-3">Step 3</h2>
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
+<span class="cp">#define MAX_PARAMETER_COUNT 10
+</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">true_type</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">return</span> <span class="n">N</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">false_type</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">N</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count_impl</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">static_assert</span><span class="p">(</span><span class="n">N</span> <span class="o">!=</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
+	<span class="k">return</span> <span class="n">continue_if_not_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="p">{</span>
+	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>我们通过函数重载替换了<code class="highlighter-rouge">if constexpr</code>，然后稍微修改了一下代码，增加了一些易用性。</p>
+
+<p>聪明的同学会发现这段代码还是有一个BUG，那就是，对于任意一个类型，只要能供被<code class="highlighter-rouge">Copy Constructor</code>、<code class="highlighter-rouge">Move Constructor</code>构造，那么<code class="highlighter-rouge">get_parameter_count</code>函数的返回值一定是1。示例代码如下：</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">Test</span>
+<span class="p">{</span>
+	<span class="c1">// Test(const Test&amp;) = delete;
+</span>	<span class="c1">// Test(Test&amp;&amp;) = delete;
+</span>	<span class="n">Test</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="c1">// 结果是1
+</span><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">get_parameter_count</span><span class="o">&lt;</span><span class="n">Test</span><span class="o">&gt;</span><span class="p">();</span>
+
+<span class="k">struct</span> <span class="n">Test</span>
+<span class="p">{</span>
+	<span class="n">Test</span><span class="p">(</span><span class="k">const</span> <span class="n">Test</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+	<span class="n">Test</span><span class="p">(</span><span class="n">Test</span><span class="o">&amp;&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+	<span class="n">Test</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="c1">// 结果是4
+</span><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">get_parameter_count</span><span class="o">&lt;</span><span class="n">Test</span><span class="o">&gt;</span><span class="p">();</span>
+</code></pre>
+</div>
+
+<p>为了解决这个问题，我们必须保证，<code class="highlighter-rouge">is_constructible&lt;T, PlaceHolder&gt;</code>的时候，不能调用到<code class="highlighter-rouge">Copy Constructor</code>以及<code class="highlighter-rouge">Move Constructor</code>。</p>
+
+<h2 id="step-4">Step 4</h2>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">U</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">PlaceHolder</span>
+<span class="p">{</span>
+	<span class="c1">// 稍微修改一下PlaceHolder，令U为要注入的类型，利用SFINAE，禁用掉T == U的情况，这样PlaceHolder永远都不能转换为要注入的类型
+</span>	<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span>  <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;!</span><span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="o">&gt;&gt;&gt;</span>
+	<span class="k">operator</span> <span class="n">T</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="k">return</span> <span class="n">T</span><span class="p">();</span>
+	<span class="p">}</span>
+<span class="p">};</span>
+
+<span class="cp">#define MAX_PARAMETER_COUNT 10
+</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">true_type</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">return</span> <span class="n">N</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">false_type</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">N</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count_impl</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">static_assert</span><span class="p">(</span><span class="n">N</span> <span class="o">!=</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
+    <span class="c1">// 相应地，给PlaceHolder传入要注入的类型，防止PlaceHolder转换为这个类型
+</span>	<span class="k">return</span> <span class="n">continue_if_not_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">I</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="p">{</span>
+	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+
+</code></pre>
+</div>
+<p>通过禁止PlaceHolder转换为要注入的类型，就可以防止<code class="highlighter-rouge">is_constructible&lt;T, PlaceHolder&gt;</code>判断为拷贝构造和移动构造的情况，这样无论要注入的类型有没有拷贝构造函数和移动构造函数，都可以实现注入。</p>
+
+<p>以上就是我们的最终代码，我们可以通过以上代码获取参数的个数。下一步，我们需要结合现有的信息，增加Provider函数，实现用户自定义注入。</p>
+
+
+    </div>
+    
+    
+    
+<!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+    
+  </article>
+</main>
+
+
+  <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
+  <a href="javascript: scrollTop()" class="scroll-top"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
+<footer>
+  <p><a href="https://a1q123456.github.io">Jack Branson</a></p>
+  <p class="rights-declaration">本站所有文章禁止转载、摘录，违者将依法追究责任，笔者保留所有权利<br>Reproducing any posts of this site is prohibited. author reserves all rights</p>
+  <p><a href="https://github.com/a1q123456/"><i class="fa fa-github-square"></i></a></p>
+  <p>© <script>document.write(new Date().getFullYear())</script></p>
+</footer>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script src="//cdn.bootcss.com/js-cookie/latest/js.cookie.js"></script>
+  <script>AV.initialize("dRftj6ACMxzGu8NXualu7WNW-gzGzoHsz", "AYBab1rsCFPh4wJns3yW1Qiy");</script>
+  <script>
+    function showHitCount(Counter) {
+      /* 这是给一个页面中有多篇文章时所调用的，例如博客主界面或者存档界面。
+      */
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      // 获取页面中所有文章的id（page.url）
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      // 批量查询
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var hits = item.get('hits');// 获取点击次数
+            var element = document.getElementById(url);
+
+            // 显示点击次数
+            $(element).find(COUNT_CONTAINER_REF).text(hits);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      // 页面（博客文章）中的信息：leancloud_visitors
+      // id为page.url， data-flag-title为page.title
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      // 只根据文章的url查询LeanCloud服务器中的数据
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {//说明LeanCloud中已经记录了这篇文章
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("hits");// 将点击次数加1
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('hits'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            // 执行这里，说明LeanCloud中还没有记录此文章
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);// 把文章标题
+            newcounter.set("url", url); // 文章url
+            newcounter.set("hits", 1); // 初始点击次数：1次
+            newcounter.save(null, { // 上传到LeanCloud服务器中
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('hits'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+    function recordHit()
+    {
+      Cookies.set('/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/', '  ', {expires: 3});
+    }
+
+    function checkRecord()
+    {
+      return typeof Cookies.get('/c++/2018/08/28/parameter-counter-make-an-ioc-framework-in-c++/') === 'undefined';
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        if (!checkRecord())
+        {
+          showHitCount(Counter);
+        }
+        else
+        {
+          // in post.html, so add 1 to hit counts
+          addCount(Counter);
+          recordHit();
+        }
+      }
+      else if ($('.post-link').length > 1){
+        // in index.html, there are many 'leancloud_visitors' and 'post-link', so just show hit counts.
+        showHitCount(Counter);
+      }
+    });
+  </script>
+
+<html>

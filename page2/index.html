@@ -25,6 +25,76 @@
   
   <article class="light">
     <header>
+      <h2><a class="post-link" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></h2>
+      <span><time datetime="2017-07-21T08:00:00+08:00">Jul 21, 2017</time> • Python</span>
+      
+          <span id="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<h1 id="什么是依赖注入">什么是依赖注入</h1>
+<blockquote>
+  <p>在软件工程中，依赖注入是种实现控制反转用于解决依赖性设计模式。
+  一个依赖关系指的是可被利用的一种对象（即服务提供端）。
+  依赖注入是将所依赖的传递给将使用的从属对象（即客户端）。
+  该服务是将会变成客户端的状态的一部分。
+  传递服务给客户端，而非允许客户端来建立或寻找服务，是本设计模式的基本要求。
+                                                                ——维基百科</p>
+</blockquote>
+
+<p>想象一个类<code class="highlighter-rouge">UserRepository</code>，它的主要功能是：通过<code class="highlighter-rouge">ConfigurationManager</code>读取配置文件并处理配置信息，并结合调用参数，处理结果，并且将处理的结果通过一个<code class="highlighter-rouge">MySqlConnection</code>，向MySQL数据库中插入信息。</p>
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
+    <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">MySqlConnection</span>
+    <span class="n">configurationManager</span><span class="p">:</span> <span class="n">ConfigurationManager</span> 
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sqlConnection</span> <span class="o">=</span> <span class="n">MySqlConnection</span><span class="p">(</span><span class="s">"localhost"</span><span class="p">,</span> <span class="mi">3306</span><span class="p">,</span> <span class="s">"username"</span><span class="p">,</span> <span class="s">"password"</span><span class="p">,</span> <span class="s">"utf8"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configurationManager</span> <span class="o">=</span> <span class="n">ConfigurationManager</span><span class="p">(</span><span class="s">"/app.xml"</span><span class="p">)</span>
+    
+    
+    <span class="c"># ...</span>
+
+</code></pre>
+</div>
+<p>现在，分析一下这个类的依赖：</p>
+
+<p><img src="/images/make-an-ioc-container-step-by-step-1.png" alt="类依赖图" /></p>
+
+<p>如图，这个类依赖于ConfigurationManager、MySqlConnection两个外部类，如果有上百个这样的类，有一天突然要求不使用MySqlConnection，而换成PostgreSqlConnection，想必改起来会累死的。</p>
+
+<p>一个类应该只关心自己的内部逻辑，不应该关心怎么从外部获取数据或返回数据到外部。</p>
+
+<p>现在将依赖结偶，抽象出专门的数据库操作接口 <code class="highlighter-rouge">ISqlConnection</code>，然后基于 <code class="highlighter-rouge">ISqlConnection</code>分别实现 <code class="highlighter-rouge">MySqlConnection</code>、<code class="highlighter-rouge">PostgreSqlConnection</code>。
+再实现一个 <code class="highlighter-rouge">ISqlConnectionProvider</code>，以后每当需要数据库连接，都通过<code class="highlighter-rouge">ISqlConnectionProvider</code>获取数据库连接。
+如果需要改变数据库连接逻辑，只需要改变 <code class="highlighter-rouge">ISqlConnectionProvider</code>的逻辑就可以了</p>
+
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">UserRepository</span><span class="p">:</span>
+    <span class="n">sqlConnection</span><span class="p">:</span> <span class="n">ISqlConnection</span>
+    <span class="n">configurationManager</span><span class="p">:</span> <span class="n">IConfigurationManager</span> 
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sqlConnection</span> <span class="o">=</span> <span class="n">ISqlConnectionProvider</span><span class="o">.</span><span class="n">getConnection</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configurationManager</span> <span class="o">=</span> <span class="n">IConfigurationManagerProvider</span><span class="o">.</span><span class="n">getConfigurationManager</span><span class="p">()</span>
+    
+    
+    <span class="c"># ...</span>
+
+</code></pre>
+</div>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
       <h2><a class="post-link" href="/javascript/2017/07/17/new-features-about-es7-and-es8/">ES7、ES8最新特性</a></h2>
       <span><time datetime="2017-07-17T08:00:00+08:00">Jul 17, 2017</time> • Javascript</span>
       
