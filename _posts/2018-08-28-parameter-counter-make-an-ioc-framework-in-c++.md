@@ -27,3 +27,84 @@ struct A
 static_assert(std::is_constructible<A, PlaceHolder, PlaceHolder>::value, "constructible"); 
 ```
 
+# std::integer_sequence / std::index_sequence
+
+接下来，要使用模板递归的方式，来判断类型能否被指定个数的ParameterPlaceholder构造。可以使用std::index_sequence来创造出指定个数个ParameterPlaceholder。
+
+
+```c++
+
+constexpr int MaxCtorParamNum = 10;
+
+template<typename Ctor, **std::size_t = 0**>
+struct PlaceHolder
+{
+    template<typename T, typename std::enable_if<!std::is_same_v<Ctor, T>, int>::type = 0>
+    operator T()
+    {
+        return T{};
+    }
+};
+
+
+template<typename T, std::size_t I>
+constexpr std::size_t _getCtorParamNum(std::index_sequence<I>)
+{
+    static_assert(IsConstructiableWithNumArg<T>(std::make_index_sequence<I>()), "inject failed, please increase the value of MaxCtorParamNum");
+    return I;
+}
+
+template<typename T, std::size_t I, std::size_t... RestI>
+constexpr std::size_t _getCtorParamNum(std::index_sequence<I, RestI...>)
+{
+    if constexpr (IsConstructiableWithNumArg<T>(std::make_index_sequence<I>()))
+    {
+        return I;
+    }
+    else
+    {
+        return _getCtorParamNum<T>(std::index_sequence<RestI...>());
+    }
+}
+
+template<typename T>
+constexpr std::size_t GetCtorParamNum()
+{
+    return _getCtorParamNum<T>(std::make_index_sequence<MaxCtorParamNum + 1>());
+}
+
+```
+
+
+为PlaceHolder增加一个std::size_t = 0的参数，然后把当前的index传递给PlaceHolder类型，最后通过C++的parameter pack **...**，将index_sequence以这种方式展开，就可以构造出来指定个数的PlaceHolder了，详细原理，可以参考[cppreference](https://en.cppreference.com/w/cpp/language/parameter_pack)
+
+index_sequence每次递归以后，都把RestI传递下去，并构造出一个新的index_sequence，这个新的index_sequence会比之前的index_sequence少一个元素。最终就可以展开为
+
+```c++
+
+constexpr std::size_t _getCtorParamNum(std::index_sequence<11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1>)
+{
+    std::is_constructible<T>(PlaceHolder<11>, PlaceHolder<10>, PlaceHolder<9>, PlaceHolder<8>, PlaceHolder<7>);
+}
+constexpr std::size_t _getCtorParamNum(std::index_sequence<10, 9, 8, 7, 6, 5, 4, 3, 2, 1>)
+{
+    std::is_constructible<T>(PlaceHolder<10>, PlaceHolder<9>, PlaceHolder<8>, PlaceHolder<7>);
+}
+constexpr std::size_t _getCtorParamNum(std::index_sequence<9, 8, 7, 6, 5, 4, 3, 2, 1>)
+{
+    std::is_constructible<T>(PlaceHolder<9>, PlaceHolder<8>, PlaceHolder<7>);
+}
+constexpr std::size_t _getCtorParamNum(std::index_sequence<8, 7, 6, 5, 4, 3, 2, 1>)
+{
+    std::is_constructible<T>(PlaceHolder<8>, PlaceHolder<7>);
+}
+constexpr std::size_t _getCtorParamNum(std::index_sequence<7, 6, 5, 4, 3, 2, 1>)
+{
+    std::is_constructible<T>(PlaceHolder<7>);
+}
+...
+```
+
+
+通过这种方法，就可以计算出构造函数的参数个数了。
+
