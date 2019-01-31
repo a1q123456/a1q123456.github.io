@@ -27,182 +27,81 @@ struct A
 static_assert(std::is_constructible<A, PlaceHolder, PlaceHolder>::value, "constructible"); 
 ```
 
-截至目前，我们已经可以*判断*一个类型能否被指定的参数个数构造以及每个参数的类型，下一个问题就在于如何准确的*获取*一个类型能被几个参数所构造，解决方案就是：`模板递归`
+# std::integer_sequence / std::index_sequence
 
-先撇开模板元编程，将问题简化。首先需要通过一个循环去判断一个类型能否被指定数量*N*的参数构造，如果不行，则*N + 1*，直到N等于最大参数个数为止。
+接下来，要使用模板递归的方式，来判断类型能否被指定个数的ParameterPlaceholder构造。可以使用std::index_sequence来创造出指定个数个ParameterPlaceholder。
 
-伪代码如下：
-
-## Step 1
 
 ```c++
 
-#define MAX_PARAMETER_COUNT 10
+constexpr int MaxCtorParamNum = 10;
 
-template<typename T>
-size_t get_parameter_count()
-{
-    for (size_t i = 0; i < MAX_PARAMETER_COUNT; i++)
-    {
-        // 尝试用i个PlaceHolder类型构造
-        if (std::is_constructible<T, PlaceHolder...i>::value)
-        {
-            return i;
-        }
-    }
-    static_assert(false, "cannot construct");
-}
-```
-
-以上代码当然不可能工作，但是，只要经过函数式编程的思维改造为模板递归，就可以工作。
-
-## Step2:
-
-```c++
-#define MAX_PARAMETER_COUNT 10
-
-// 无实际用处的I参数
-template<size_t I>
+template<typename Ctor, **std::size_t = 0**>
 struct PlaceHolder
 {
-	template <typename  T>
-	operator T()
-	{
-		return T();
-	}
+    template<typename T, typename std::enable_if<!std::is_same_v<Ctor, T>, int>::type = 0>
+    operator T()
+    {
+        return T{};
+    }
 };
 
 
-template<typename T, size_t N, std::size_t... I>
-size_t get_parameter_count()
+template<typename T, std::size_t I>
+constexpr std::size_t _getCtorParamNum(std::index_sequence<I>)
 {
-    if constexpr (std::is_constructible<T, PlaceHolder<I>...>::value)
+    static_assert(IsConstructiableWithNumArg<T>(std::make_index_sequence<I>()), "inject failed, please increase the value of MaxCtorParamNum");
+    return I;
+}
+
+template<typename T, std::size_t I, std::size_t... RestI>
+constexpr std::size_t _getCtorParamNum(std::index_sequence<I, RestI...>)
+{
+    if constexpr (IsConstructiableWithNumArg<T>(std::make_index_sequence<I>()))
     {
-        return N;
-    }
-    else if constexpr (N == MAX_PARAMETER_COUNT)
-    {
-        static_assert(false, "cannot construct");
+        return I;
     }
     else
     {
-        return get_parameter_count<T, N + 1>(std::make_index_sequence<N + 1>());
+        return _getCtorParamNum<T>(std::index_sequence<RestI...>());
     }
 }
+
+template<typename T>
+constexpr std::size_t GetCtorParamNum()
+{
+    return _getCtorParamNum<T>(std::make_index_sequence<MaxCtorParamNum + 1>());
+}
+
 ```
 
-首先，改造`PlaceHolder`类型，让它接受一个`size_t`类型的模板参数，这个参数不起到实际作用，只是用来扩展参数包。然后通过`0if constexpr`判断是否能被指定参数个数构造。
 
+为PlaceHolder增加一个std::size_t = 0的参数，然后把当前的index传递给PlaceHolder类型，最后通过C++的parameter pack **...**，将index_sequence以这种方式展开，就可以构造出来指定个数的PlaceHolder了，详细原理，可以参考[cppreference](https://en.cppreference.com/w/cpp/language/parameter_pack)
 
-以上代码可以在C++17中工作，并且不是`constexpr`的函数，不过，`if constexpr`语句只是一种语法糖而已，我们可以进一步改造为更通用的代码：
+index_sequence每次递归以后，都把RestI传递下去，并构造出一个新的index_sequence，这个新的index_sequence会比之前的index_sequence少一个元素。最终就可以展开为
 
-## Step 3
 ```c++
 
-#define MAX_PARAMETER_COUNT 10
-
-template <typename T, std::size_t N>
-constexpr size_t continue_if_not_constructible(std::true_type)
+constexpr std::size_t _getCtorParamNum(std::index_sequence<11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1>)
 {
-	return N;
+    std::is_constructible<T>(PlaceHolder<11>, PlaceHolder<10>, PlaceHolder<9>, PlaceHolder<8>, PlaceHolder<7>);
 }
-
-template <typename T, std::size_t N>
-constexpr size_t continue_if_not_constructible(std::false_type)
+constexpr std::size_t _getCtorParamNum(std::index_sequence<10, 9, 8, 7, 6, 5, 4, 3, 2, 1>)
 {
-	return get_parameter_count_impl<T, N +1>(std::make_index_sequence<N + 1>());
+    std::is_constructible<T>(PlaceHolder<10>, PlaceHolder<9>, PlaceHolder<8>, PlaceHolder<7>);
 }
-
-
-template<typename T, size_t N, std::size_t... I>
-constexpr size_t get_parameter_count_impl(std::index_sequence<I...>)
+constexpr std::size_t _getCtorParamNum(std::index_sequence<9, 8, 7, 6, 5, 4, 3, 2, 1>)
 {
-	static_assert(N != MAX_PARAMETER_COUNT, "cannot construct");
-	return continue_if_not_constructible<T, N>(std::is_constructible<T, PlaceHolder<I>...>());
+    std::is_constructible<T>(PlaceHolder<9>, PlaceHolder<8>, PlaceHolder<7>);
 }
-
-template <typename T>
-constexpr size_t get_parameter_count()
+constexpr std::size_t _getCtorParamNum(std::index_sequence<8, 7, 6, 5, 4, 3, 2, 1>)
 {
-	return get_parameter_count_impl<T, 1>(std::make_index_sequence<1>());
+    std::is_constructible<T>(PlaceHolder<8>, PlaceHolder<7>);
 }
+constexpr std::size_t _getCtorParamNum(std::index_sequence<7, 6, 5, 4, 3, 2, 1>)
+{
+    std::is_constructible<T>(PlaceHolder<7>);
+}
+...
 ```
-
-我们通过函数重载替换了`if constexpr`，然后稍微修改了一下代码，增加了一些易用性。
-
-聪明的同学会发现这段代码还是有一个BUG，那就是，对于任意一个类型，只要能供被`Copy Constructor`、`Move Constructor`构造，那么`get_parameter_count`函数的返回值一定是1。示例代码如下：
-
-```c++
-struct Test
-{
-	// Test(const Test&) = delete;
-	// Test(Test&&) = delete;
-	Test(int, int, int, int) {}
-};
-
-// 结果是1
-std::cout << get_parameter_count<Test>();
-
-struct Test
-{
-	Test(const Test&) = delete;
-	Test(Test&&) = delete;
-	Test(int, int, int, int) {}
-};
-
-// 结果是4
-std::cout << get_parameter_count<Test>();
-```
-
-为了解决这个问题，我们必须保证，`is_constructible<T, PlaceHolder>`的时候，不能调用到`Copy Constructor`以及`Move Constructor`。
-
-## Step 4
-
-```c++
-template<typename U, size_t I>
-struct PlaceHolder
-{
-	// 稍微修改一下PlaceHolder，令U为要注入的类型，利用SFINAE，禁用掉T == U的情况，这样PlaceHolder永远都不能转换为要注入的类型
-	template <typename  T, typename = std::enable_if_t<!std::is_same_v<T, U>>>
-	operator T()
-	{
-		return T();
-	}
-};
-
-#define MAX_PARAMETER_COUNT 10
-
-template <typename T, std::size_t N>
-constexpr size_t continue_if_not_constructible(std::true_type)
-{
-	return N;
-}
-
-template <typename T, std::size_t N>
-constexpr size_t continue_if_not_constructible(std::false_type)
-{
-	return get_parameter_count_impl<T, N +1>(std::make_index_sequence<N + 1>());
-}
-
-
-template<typename T, size_t N, std::size_t... I>
-constexpr size_t get_parameter_count_impl(std::index_sequence<I...>)
-{
-	static_assert(N != MAX_PARAMETER_COUNT, "cannot construct");
-    // 相应地，给PlaceHolder传入要注入的类型，防止PlaceHolder转换为这个类型
-	return continue_if_not_constructible<T, N>(std::is_constructible<T, PlaceHolder<T, I>...>());
-}
-
-template <typename T>
-constexpr size_t get_parameter_count()
-{
-	return get_parameter_count_impl<T, 1>(std::make_index_sequence<1>());
-}
-
-```
-通过禁止PlaceHolder转换为要注入的类型，就可以防止`is_constructible<T, PlaceHolder>`判断为拷贝构造和移动构造的情况，这样无论要注入的类型有没有拷贝构造函数和移动构造函数，都可以实现注入。
-
-
-以上就是我们的最终代码，我们可以通过以上代码获取参数的个数。下一步，我们需要结合现有的信息，增加Provider函数，实现用户自定义注入。
-
 
