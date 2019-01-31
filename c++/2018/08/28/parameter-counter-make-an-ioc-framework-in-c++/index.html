@@ -57,181 +57,81 @@
 </code></pre>
 </div>
 
-<p>截至目前，我们已经可以<em>判断</em>一个类型能否被指定的参数个数构造以及每个参数的类型，下一个问题就在于如何准确的<em>获取</em>一个类型能被几个参数所构造，解决方案就是：<code class="highlighter-rouge">模板递归</code></p>
+<h1 id="stdinteger_sequence--stdindex_sequence">std::integer_sequence / std::index_sequence</h1>
 
-<p>先撇开模板元编程，将问题简化。首先需要通过一个循环去判断一个类型能否被指定数量<em>N</em>的参数构造，如果不行，则<em>N + 1</em>，直到N等于最大参数个数为止。</p>
-
-<p>伪代码如下：</p>
-
-<h2 id="step-1">Step 1</h2>
+<p>接下来，要使用模板递归的方式，来判断类型能否被指定个数的ParameterPlaceholder构造。可以使用std::index_sequence来创造出指定个数个ParameterPlaceholder。</p>
 
 <div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
-<span class="cp">#define MAX_PARAMETER_COUNT 10
-</span>
-<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
-<span class="p">{</span>
-    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="c1">// 尝试用i个PlaceHolder类型构造
-</span>        <span class="k">if</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="p">...</span><span class="n">i</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span>
-        <span class="p">{</span>
-            <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">static_assert</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre>
-</div>
+<span class="k">constexpr</span> <span class="kt">int</span> <span class="n">MaxCtorParamNum</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
 
-<p>以上代码当然不可能工作，但是，只要经过函数式编程的思维改造为模板递归，就可以工作。</p>
-
-<h2 id="step2">Step2:</h2>
-
-<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="cp">#define MAX_PARAMETER_COUNT 10
-</span>
-<span class="c1">// 无实际用处的I参数
-</span><span class="k">template</span><span class="o">&lt;</span><span class="kt">size_t</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">Ctor</span><span class="p">,</span> <span class="o">**</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="o">=</span> <span class="mi">0</span><span class="o">**&gt;</span>
 <span class="k">struct</span> <span class="n">PlaceHolder</span>
 <span class="p">{</span>
-	<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span>  <span class="n">T</span><span class="o">&gt;</span>
-	<span class="k">operator</span> <span class="n">T</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">return</span> <span class="n">T</span><span class="p">();</span>
-	<span class="p">}</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if</span><span class="o">&lt;!</span><span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">Ctor</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;::</span><span class="n">type</span> <span class="o">=</span> <span class="mi">0</span><span class="o">&gt;</span>
+    <span class="k">operator</span> <span class="n">T</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">T</span><span class="p">{};</span>
+    <span class="p">}</span>
 <span class="p">};</span>
 
 
-<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">N</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">I</span><span class="o">&gt;</span>
-<span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">I</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">)</span>
 <span class="p">{</span>
-    <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">static_assert</span><span class="p">(</span><span class="n">IsConstructiableWithNumArg</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">()),</span> <span class="s">"inject failed, please increase the value of MaxCtorParamNum"</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">I</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">I</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">RestI</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="p">,</span> <span class="n">RestI</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">IsConstructiableWithNumArg</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">()))</span>
     <span class="p">{</span>
-        <span class="k">return</span> <span class="n">N</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span> <span class="k">constexpr</span> <span class="p">(</span><span class="n">N</span> <span class="o">==</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="k">static_assert</span><span class="p">(</span><span class="nb">false</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">I</span><span class="p">;</span>
     <span class="p">}</span>
     <span class="k">else</span>
     <span class="p">{</span>
-        <span class="k">return</span> <span class="n">get_parameter_count</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+        <span class="k">return</span> <span class="n">_getCtorParamNum</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">RestI</span><span class="p">...</span><span class="o">&gt;</span><span class="p">());</span>
     <span class="p">}</span>
 <span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">GetCtorParamNum</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">_getCtorParamNum</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">MaxCtorParamNum</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="p">}</span>
+
 </code></pre>
 </div>
 
-<p>首先，改造<code class="highlighter-rouge">PlaceHolder</code>类型，让它接受一个<code class="highlighter-rouge">size_t</code>类型的模板参数，这个参数不起到实际作用，只是用来扩展参数包。然后通过<code class="highlighter-rouge">0if constexpr</code>判断是否能被指定参数个数构造。</p>
+<p>为PlaceHolder增加一个std::size_t = 0的参数，然后把当前的index传递给PlaceHolder类型，最后通过C++的parameter pack <strong>…</strong>，将index_sequence以这种方式展开，就可以构造出来指定个数的PlaceHolder了，详细原理，可以参考<a href="https://en.cppreference.com/w/cpp/language/parameter_pack">cppreference</a></p>
 
-<p>以上代码可以在C++17中工作，并且不是<code class="highlighter-rouge">constexpr</code>的函数，不过，<code class="highlighter-rouge">if constexpr</code>语句只是一种语法糖而已，我们可以进一步改造为更通用的代码：</p>
+<p>index_sequence每次递归以后，都把RestI传递下去，并构造出一个新的index_sequence，这个新的index_sequence会比之前的index_sequence少一个元素。最终就可以展开为</p>
 
-<h2 id="step-3">Step 3</h2>
 <div class="language-c++ highlighter-rouge"><pre class="highlight"><code>
-<span class="cp">#define MAX_PARAMETER_COUNT 10
-</span>
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">true_type</span><span class="p">)</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">)</span>
 <span class="p">{</span>
-	<span class="k">return</span> <span class="n">N</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">11</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">10</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">9</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">8</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span><span class="p">);</span>
 <span class="p">}</span>
-
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">false_type</span><span class="p">)</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="mi">10</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">)</span>
 <span class="p">{</span>
-	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">10</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">9</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">8</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span><span class="p">);</span>
 <span class="p">}</span>
-
-
-<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">N</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">I</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count_impl</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="mi">9</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">)</span>
 <span class="p">{</span>
-	<span class="k">static_assert</span><span class="p">(</span><span class="n">N</span> <span class="o">!=</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
-	<span class="k">return</span> <span class="n">continue_if_not_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="n">I</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;</span><span class="p">());</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">9</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">8</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span><span class="p">);</span>
 <span class="p">}</span>
-
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">)</span>
 <span class="p">{</span>
-	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">8</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span><span class="p">);</span>
 <span class="p">}</span>
+<span class="k">constexpr</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">_getCtorParamNum</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="p">...</span>
 </code></pre>
 </div>
-
-<p>我们通过函数重载替换了<code class="highlighter-rouge">if constexpr</code>，然后稍微修改了一下代码，增加了一些易用性。</p>
-
-<p>聪明的同学会发现这段代码还是有一个BUG，那就是，对于任意一个类型，只要能供被<code class="highlighter-rouge">Copy Constructor</code>、<code class="highlighter-rouge">Move Constructor</code>构造，那么<code class="highlighter-rouge">get_parameter_count</code>函数的返回值一定是1。示例代码如下：</p>
-
-<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">Test</span>
-<span class="p">{</span>
-	<span class="c1">// Test(const Test&amp;) = delete;
-</span>	<span class="c1">// Test(Test&amp;&amp;) = delete;
-</span>	<span class="n">Test</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
-<span class="p">};</span>
-
-<span class="c1">// 结果是1
-</span><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">get_parameter_count</span><span class="o">&lt;</span><span class="n">Test</span><span class="o">&gt;</span><span class="p">();</span>
-
-<span class="k">struct</span> <span class="n">Test</span>
-<span class="p">{</span>
-	<span class="n">Test</span><span class="p">(</span><span class="k">const</span> <span class="n">Test</span><span class="o">&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
-	<span class="n">Test</span><span class="p">(</span><span class="n">Test</span><span class="o">&amp;&amp;</span><span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
-	<span class="n">Test</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{}</span>
-<span class="p">};</span>
-
-<span class="c1">// 结果是4
-</span><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">get_parameter_count</span><span class="o">&lt;</span><span class="n">Test</span><span class="o">&gt;</span><span class="p">();</span>
-</code></pre>
-</div>
-
-<p>为了解决这个问题，我们必须保证，<code class="highlighter-rouge">is_constructible&lt;T, PlaceHolder&gt;</code>的时候，不能调用到<code class="highlighter-rouge">Copy Constructor</code>以及<code class="highlighter-rouge">Move Constructor</code>。</p>
-
-<h2 id="step-4">Step 4</h2>
-
-<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">U</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">I</span><span class="o">&gt;</span>
-<span class="k">struct</span> <span class="n">PlaceHolder</span>
-<span class="p">{</span>
-	<span class="c1">// 稍微修改一下PlaceHolder，令U为要注入的类型，利用SFINAE，禁用掉T == U的情况，这样PlaceHolder永远都不能转换为要注入的类型
-</span>	<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span>  <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">enable_if_t</span><span class="o">&lt;!</span><span class="n">std</span><span class="o">::</span><span class="n">is_same_v</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="o">&gt;&gt;&gt;</span>
-	<span class="k">operator</span> <span class="n">T</span><span class="p">()</span>
-	<span class="p">{</span>
-		<span class="k">return</span> <span class="n">T</span><span class="p">();</span>
-	<span class="p">}</span>
-<span class="p">};</span>
-
-<span class="cp">#define MAX_PARAMETER_COUNT 10
-</span>
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">true_type</span><span class="p">)</span>
-<span class="p">{</span>
-	<span class="k">return</span> <span class="n">N</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">N</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">continue_if_not_constructible</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">false_type</span><span class="p">)</span>
-<span class="p">{</span>
-	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
-<span class="p">}</span>
-
-
-<span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">N</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="p">...</span> <span class="n">I</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count_impl</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">index_sequence</span><span class="o">&lt;</span><span class="n">I</span><span class="p">...</span><span class="o">&gt;</span><span class="p">)</span>
-<span class="p">{</span>
-	<span class="k">static_assert</span><span class="p">(</span><span class="n">N</span> <span class="o">!=</span> <span class="n">MAX_PARAMETER_COUNT</span><span class="p">,</span> <span class="s">"cannot construct"</span><span class="p">);</span>
-    <span class="c1">// 相应地，给PlaceHolder传入要注入的类型，防止PlaceHolder转换为这个类型
-</span>	<span class="k">return</span> <span class="n">continue_if_not_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">is_constructible</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">PlaceHolder</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">I</span><span class="o">&gt;</span><span class="p">...</span><span class="o">&gt;</span><span class="p">());</span>
-<span class="p">}</span>
-
-<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="k">constexpr</span> <span class="kt">size_t</span> <span class="n">get_parameter_count</span><span class="p">()</span>
-<span class="p">{</span>
-	<span class="k">return</span> <span class="n">get_parameter_count_impl</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">make_index_sequence</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">());</span>
-<span class="p">}</span>
-
-</code></pre>
-</div>
-<p>通过禁止PlaceHolder转换为要注入的类型，就可以防止<code class="highlighter-rouge">is_constructible&lt;T, PlaceHolder&gt;</code>判断为拷贝构造和移动构造的情况，这样无论要注入的类型有没有拷贝构造函数和移动构造函数，都可以实现注入。</p>
-
-<p>以上就是我们的最终代码，我们可以通过以上代码获取参数的个数。下一步，我们需要结合现有的信息，增加Provider函数，实现用户自定义注入。</p>
 
 
     </div>

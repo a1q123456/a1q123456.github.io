@@ -25,6 +25,59 @@
   
   <article class="light">
     <header>
+      <h2><a class="post-link" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">Python-如何实现一个依赖注入IOC容器 二：Type Hinting</a></h2>
+      <span><time datetime="2017-07-22T08:00:00+08:00">Jul 22, 2017</time> • Python</span>
+      
+          <span id="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/" class="leancloud_visitors" data-flag-title="">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+          </span>
+      
+    </header>
+    <div>
+<p>通过读取Type Hinting，就可以知道构造函数所依赖的类了。</p>
+
+<h1 id="什么是type-hinting">什么是Type Hinting</h1>
+
+<p>回忆一下C语言</p>
+<div class="language-c highlighter-rouge"><pre class="highlight"><code>
+<span class="kt">float</span> <span class="nf">sum</span><span class="p">(</span><span class="kt">float</span> <span class="n">a</span><span class="p">,</span> <span class="kt">float</span> <span class="n">b</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre>
+</div>
+
+<p>C语言中，所有的变量、表达式、函数都有自己的<em>固定</em>类型，而在Python中，每个变量虽然有自己的类型信息，但变量的类型并不是固定的。</p>
+
+<p>```python</p>
+
+<p>def sum(a, b):<br />
+    return a + b</p>
+
+<p>type(sum(1, 2))  # int</p>
+
+<p>type(sum(1.2, 2.3))  # float</p>
+
+<p>b = 1</p>
+
+<p>type(b)  # int</p>
+
+<p>b = 1.2</p>
+
+<p>type(b)  # float</p>
+
+
+    </div>
+    <footer>
+      <p><a class="ghost" href="/python/2017/07/22/how-to-make-an-ioc-container-using-python-section-type-hinting/">阅读更多 »</a></p>
+    </footer>
+  </article>
+
+  <article class="light">
+    <header>
       <h2><a class="post-link" href="/python/2017/07/21/how-to-make-an-ioc-container-using-python-section-what-is-dependency-injection/">Python-如何实现一个依赖注入IOC容器 一：什么是依赖注入</a></h2>
       <span><time datetime="2017-07-21T08:00:00+08:00">Jul 21, 2017</time> • Python</span>
       

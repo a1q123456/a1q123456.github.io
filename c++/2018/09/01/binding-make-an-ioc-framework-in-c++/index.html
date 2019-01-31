@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="author" content="Jack Branson">
+<meta name="description" content="技术博客，写点技术">
+<title class="title"> C++-使用C++实现依赖注入框架 三、Type Binding › new TechBlog()</title>
+<link rel="canonical" href="https://a1q123456.github.io/c++/2018/09/01/binding-make-an-ioc-framework-in-c++/">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="/basic.css" rel="stylesheet">
+<link href="/highlight.css" rel="stylesheet">
+<link href="/index.css" rel="stylesheet">
+<link type="application/atom+xml" rel="alternate" href="https://a1q123456.github.io/feed.xml" title="new TechBlog()" />
+
+
+</head>
+<header>
+  <h1><a href="/">new TechBlog()</a></h1>
+  <nav>
+    <li><a href="/">首页</a></li><li><a href="/categories#Javascript">Javascript</a></li><li><a href="/categories#Python">Python</a></li><li><a href="/categories#C++">C++</a></li><li><a href="/archive/">所有文章</a></li><li><a href="/categories/">全部分类</a></li>
+  </nav>
+</header>
+<main>
+  <article class="light">
+    <header>
+      <h2><a href="/c++/2018/09/01/binding-make-an-ioc-framework-in-c++/" class="title">C++-使用C++实现依赖注入框架 三、Type Binding</a></h2>
+      <span><time datetime="2018-09-01T08:00:00+08:00">Sep 1, 2018</time> • C++</span>
+      
+        <span id="/c++/2018/09/01/binding-make-an-ioc-framework-in-c++/" class="leancloud_visitors" data-flag-title="C++-使用C++实现依赖注入框架 三、Type Binding">
+          <span class="post-meta-divider">|</span>
+          <span class="post-meta-item-text"> 阅读量:  </span>
+          <span class="leancloud-visitors-count"></span>
+        </span>
+      
+    </header>
+    <div>
+<p>上一节我们已经找到了获取构造函数参数个数的方法，现在，我们要继续依赖注入的实现。那就是，绑定一个类型到一个返回该类型的Provider函数。</p>
+
+<p>我们可以把类型和Provider之间的关系称为<code class="highlighter-rouge">Binding</code>，一个<code class="highlighter-rouge">Binding</code>上将保存了类型元数据和Provider对象。那么，如何实现这样的一个<code class="highlighter-rouge">Binding</code>呢？答案还是模板元编程。</p>
+
+<h1 id="binding的实现">Binding的实现</h1>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">Binding</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="n">T</span><span class="p">()</span><span class="o">&gt;</span> <span class="n">provider</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="n">Binding</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">{[]{</span> <span class="k">return</span> <span class="mi">10</span><span class="p">;</span> <span class="p">}};</span>
+</code></pre>
+</div>
+
+<p>以上是一个最简单的<code class="highlighter-rouge">Binding</code>的实现，下一步，我们需要将Binding保存到一个编译期容器中，在注入类型的时候，遍历这个容器，找到合适的<code class="highlighter-rouge">Binding</code>，并调用对应的<code class="highlighter-rouge">Provider</code>。不难想到，这个容器的最佳选项就是<code class="highlighter-rouge">std::tuple</code>。</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">auto</span> <span class="n">bindings</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_tuple</span><span class="p">(</span><span class="n">Binding</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">([]{</span> <span class="k">return</span> <span class="mi">10</span><span class="p">;</span> <span class="p">}),</span> <span class="n">Binding</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">([]</span> <span class="p">{</span> <span class="k">return</span> <span class="mf">2.1</span><span class="n">f</span><span class="p">;</span> <span class="p">}));</span>
+</code></pre>
+</div>
+
+<p>我们可以通过这样的方式，将Binding保存在tuple中，下一步，就是判断一个类型是否对应一个<code class="highlighter-rouge">Binding</code>了。</p>
+
+<p>要判断一个类型是否对应一个<code class="highlighter-rouge">Binding</code>，就是要判断<code class="highlighter-rouge">Binding&lt;T&gt;</code>中的<code class="highlighter-rouge">T</code>是否是这个类型。现在，我们不难联想到C++的type_traits中的<code class="highlighter-rouge">std::is_same</code>，<code class="highlighter-rouge">std::is_same</code>的实现大致如下：</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">is_same</span> <span class="o">:</span> <span class="n">false_type</span> <span class="p">{};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">is_same</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="o">:</span> <span class="n">true_type</span> <span class="p">{};</span>
+</code></pre>
+</div>
+
+<p>利用模板偏特化，假如T和U是两个类型，就会匹配到第一个重载，假如T和U是同一个类型，就会匹配到第二个重载。</p>
+
+<p>相应地，要判断<code class="highlighter-rouge">Binding&lt;T&gt;</code>中的<code class="highlighter-rouge">T</code>是否与要注入的类型相同，也可以借鉴这种思路。</p>
+
+<div class="language-c++ highlighter-rouge"><pre class="highlight"><code><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">Binding</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="k">typename</span> <span class="n">U</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">is_binding_same</span> <span class="o">:</span> <span class="n">false_type</span> <span class="p">{};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">is_binding_same</span><span class="o">&lt;</span><span class="n">Binding</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="o">:</span> <span class="n">true_type</span> <span class="p">{};</span>
+
+</code></pre>
+</div>
+<p>这样，就可以判断<code class="highlighter-rouge">Binding&lt;T&gt;</code>中的T是否为需要的类型了。下一步，我们需要在PlaceHolder中遍历tuple中的每一个Binding，判断Binding是否为需要的类型， 假如是，则调用Binding::provider，假如不是，则忽略。</p>
+
+
+    </div>
+    
+    
+    
+<!-- 来必力City版安装代码 -->
+<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTU1MS82MTE5">
+<script type="text/javascript">
+   (function(d, s) {
+       var j, e = d.getElementsByTagName(s)[0];
+
+       if (typeof LivereTower === 'function') { return; }
+
+       j = d.createElement(s);
+       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+       j.async = true;
+
+       e.parentNode.insertBefore(j, e);
+   })(document, 'script');
+</script>
+<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+</div>
+<!-- City版安装代码已完成 -->
+    
+  </article>
+</main>
+
+
+  <script>function scrollTop() { $("html, body").animate({ scrollTop: 0 }, "slow");}</script>
+  <a href="javascript: scrollTop()" class="scroll-top"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
+<footer>
+  <p><a href="https://a1q123456.github.io">Jack Branson</a></p>
+  <p class="rights-declaration">本站所有文章禁止转载、摘录，违者将依法追究责任，笔者保留所有权利<br>Reproducing any posts of this site is prohibited. author reserves all rights</p>
+  <p><a href="https://github.com/a1q123456/"><i class="fa fa-github-square"></i></a></p>
+  <p>© <script>document.write(new Date().getFullYear())</script></p>
+</footer>
+<script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script src="//cdn.bootcss.com/js-cookie/latest/js.cookie.js"></script>
+  <script>AV.initialize("dRftj6ACMxzGu8NXualu7WNW-gzGzoHsz", "AYBab1rsCFPh4wJns3yW1Qiy");</script>
+  <script>
+    function showHitCount(Counter) {
+      /* 这是给一个页面中有多篇文章时所调用的，例如博客主界面或者存档界面。
+      */
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      // 获取页面中所有文章的id（page.url）
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      // 批量查询
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var hits = item.get('hits');// 获取点击次数
+            var element = document.getElementById(url);
+
+            // 显示点击次数
+            $(element).find(COUNT_CONTAINER_REF).text(hits);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      // 页面（博客文章）中的信息：leancloud_visitors
+      // id为page.url， data-flag-title为page.title
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      // 只根据文章的url查询LeanCloud服务器中的数据
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {//说明LeanCloud中已经记录了这篇文章
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("hits");// 将点击次数加1
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('hits'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            // 执行这里，说明LeanCloud中还没有记录此文章
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);// 把文章标题
+            newcounter.set("url", url); // 文章url
+            newcounter.set("hits", 1); // 初始点击次数：1次
+            newcounter.save(null, { // 上传到LeanCloud服务器中
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('hits'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+    function recordHit()
+    {
+      Cookies.set('/c++/2018/09/01/binding-make-an-ioc-framework-in-c++/', '  ', {expires: 3});
+    }
+
+    function checkRecord()
+    {
+      return typeof Cookies.get('/c++/2018/09/01/binding-make-an-ioc-framework-in-c++/') === 'undefined';
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        if (!checkRecord())
+        {
+          showHitCount(Counter);
+        }
+        else
+        {
+          // in post.html, so add 1 to hit counts
+          addCount(Counter);
+          recordHit();
+        }
+      }
+      else if ($('.post-link').length > 1){
+        // in index.html, there are many 'leancloud_visitors' and 'post-link', so just show hit counts.
+        showHitCount(Counter);
+      }
+    });
+  </script>
+
+<html>
