@@ -1,41 +1,92 @@
-import { promises as fs } from "fs"
 import path from "path";
+import { promises as fs } from "fs"
+import { remark } from "remark";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import rehypeDocument from "rehype-document";
+import rehypeFormat from "rehype-format";
+import rehypeStringify from "rehype-stringify";
+import remarkFrontmatter from "remark-frontmatter";
+import rehypeHighlight from "rehype-highlight";
+import { matter } from 'vfile-matter'
+
 
 const BLOG_DIR = path.join(process.cwd(), "blogs")
+const PREVIEW_FILE_LINES = 30
 
-const getPostData = async () => {
-    const categoryFolders = (await fs.readdir(BLOG_DIR)).map(folderName => path.join(BLOG_DIR, folderName))
+interface MarkdownMetadata {
+    title: string
+}
 
-    const mdTitleParser = (mdContent: string) => {
-        const titleLine = mdContent.split('\n').filter(line => line.trimStart().startsWith('#'))[0]
-        return titleLine.split('#')[1].trim()
+const renderMd = async (mdContent: string, fullData: boolean) => {
+    const result = await remark()
+        .use(remarkParse)
+        .use(remarkRehype)
+        .use(rehypeDocument)
+        .use(rehypeFormat)
+        .use(rehypeStringify)
+        .use(rehypeHighlight)
+        .use(remarkFrontmatter, ['yaml', 'toml'])
+        .use(() => (_, file) => { matter(file) })
+        .use(remarkGfm)
+        .process(fullData ? mdContent : mdContent.split('\n').slice(0, PREVIEW_FILE_LINES).join('\n'))
+    return {
+        title: (result.data.matter as MarkdownMetadata).title,
+        content: result.value
     }
+}
 
-    const fileNames = (await Promise.all(categoryFolders
-        .map(async categoryFolder => {
-            const files = await fs.readdir(categoryFolder, 'utf-8')
-            return files.filter(fileName => fileName.endsWith('.md'))
-                .map(fileName => path.join(categoryFolder, fileName))
-        }))).flat()
+export const getCategories = async () => {
+    const categoryFolders = (await fs.readdir(BLOG_DIR)).map(folder => path.join(BLOG_DIR, folder))
 
-    const postList = await Promise.all(fileNames.map(async mdFile => ({
-        categoryId: path.basename(path.dirname(mdFile)),
-        title: mdTitleParser(await fs.readFile(mdFile, { encoding: 'utf-8' })),
-        id: path.basename(mdFile),
-        createdDateTime: (await fs.stat(mdFile)).ctime,
-        content: await fs.readFile(mdFile, 'utf-8')
-    })))
-
-    const categories = await Promise.all(categoryFolders
+    return Promise.all(categoryFolders
         .map(async categoryFolder => ({
             id: path.basename(categoryFolder),
             title: JSON.parse(await fs.readFile(path.join(categoryFolder, "metadata.json"), 'utf-8'))['title']
         })))
+}
 
+const getPostListForCategory = async (categoryId: string) => {
+    const categoryFolder = path.join(BLOG_DIR, categoryId)
+
+    const fileNames = (await fs.readdir(categoryFolder, 'utf-8'))
+        .filter(fileName => fileName.endsWith('.md'))
+        .map(fileName => path.join(categoryFolder, fileName))
+
+    const postList = await Promise.all(fileNames.map(async mdFile => {
+        const { content, title } = await renderMd(await fs.readFile(mdFile, 'utf-8'), false)
+
+        return {
+            categoryId: path.basename(path.dirname(mdFile)),
+            title,
+            id: path.parse(mdFile).name,
+            createdDateTime: (await fs.stat(mdFile)).ctime.getTime(),
+            content
+        }
+    }))
+
+    return postList.filter(post => post.categoryId == categoryId)
+}
+
+export const getPost = async (categoryId: string, postId: string) => {
+    const mdFile = path.join(BLOG_DIR, categoryId, `${postId}.md`)
+    const { content, title } = await renderMd(await fs.readFile(mdFile, 'utf-8'), true)
     return {
-        categories,
-        postList,
+        categoryId: path.basename(path.dirname(mdFile)),
+        title,
+        id: path.parse(mdFile).name,
+        createdDateTime: (await fs.stat(mdFile)).ctime.getTime(),
+        content
     }
 }
 
-export default getPostData
+export const getPostList = async (categoryId?: string) => {
+    if (categoryId) {
+        return getPostListForCategory(categoryId)
+    }
+    const posts = await Promise.all((await getCategories())
+        .map(async category => await getPostListForCategory(category.id)))
+
+    return posts.flat()
+}

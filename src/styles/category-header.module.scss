@@ -1,0 +1,36 @@
+@import "@/styles/variables.module.scss";
+
+.header {
+    display: flex;
+    flex-direction: column;
+}
+
+.headerTitle {
+    font-size: $brand-font-size;
+    text-align: center;
+}
+
+.headerItem {
+    display: inline-flex;
+    flex-grow: 1;
+    text-decoration: none;
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+    color: $link-color;
+    transition: color 0.25s;
+}
+
+.headerItem:hover {
+    color: $link-color-hover;
+}
+
+.headerItem:active {
+    color: $link-color-pressed;
+}
+
+.headerItemList {
+    padding: 0 20vw;
+    display: flex;
+    flex-wrap: nowrap;
+}

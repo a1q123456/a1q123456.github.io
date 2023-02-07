@@ -4,5 +4,5 @@ export interface Post {
     categoryId: string
     title: string
     content: string
-    createdDateTime: Date
+    createdDateTime: number
 }
