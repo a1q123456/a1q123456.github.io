@@ -6,14 +6,4 @@
     align-items: stretch;
 }
 
-@media only screen and (max-width: $small-sreen-dimension) {
-    .postList {
-        padding: 0 1.5rem;
-    }
-}
-
-@media only screen and (min-width: $small-sreen-dimension) {
-    .postList {
-        padding: 0 15vw;
-    }
-}
+@include add-main-body-padding(".postList");

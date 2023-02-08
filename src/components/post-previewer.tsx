@@ -1,17 +1,13 @@
 import { Post } from "@/models/post"
 import Link from "next/link"
 import styles from "@/styles/post-previewer.module.scss"
+import { formatDateTime } from "@/utils/format-datetime"
 
 export interface PostPreviewerProps {
     post: Post
 }
 
 const PostPreviewer = (props: PostPreviewerProps) => {
-
-    const formatDateTime = (timestamp: number) => {
-        return new Date(timestamp).toLocaleDateString()
-    }
-
     return <div className={styles.postItem}>
         <Link legacyBehavior href={{
             pathname: '/category/[categoryId]/[postId]',

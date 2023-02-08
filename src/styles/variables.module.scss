@@ -1,4 +1,5 @@
-$small-sreen-dimension: 600px;
+$small-sreen-dimension: 768px;
+$large-sreen-dimension: 1440px;
 
 $brand-font-size: 2rem;
 
@@ -14,3 +15,20 @@ $link-color-pressed: $link-color-hover;
 $secondary-text-color: lighten($primary-text-color, 60%);
 
 $primary-background-color: #fcfcfc;
+
+@mixin add-main-body-padding($selector) {
+    
+    #{$selector} {
+        @media only screen and (max-width: $small-sreen-dimension) {
+            padding: 0 1.5rem;
+        }
+
+        @media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
+            padding: 0 15vw;
+        }
+        
+        @media only screen and (min-width: $large-sreen-dimension) {
+            padding: 0 20vw;
+        }
+    }
+}

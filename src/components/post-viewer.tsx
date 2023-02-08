@@ -1,11 +1,17 @@
 import { Post } from "@/models/post"
+import styles from "@/styles/post-viewer.module.scss"
+import { formatDateTime } from "@/utils/format-datetime"
 
 export interface PostViewerProps {
     post: Post
 }
 
 const PostViewer = (props: PostViewerProps) => {
-    return <div dangerouslySetInnerHTML={{ __html: props.post.content }} />
+    return <div className={styles.postViewer}>
+        <h1>{props.post.title}</h1>
+        <h6 className={styles.postDate}>{formatDateTime(props.post.createdDateTime)}</h6>
+        <div dangerouslySetInnerHTML={{ __html: props.post.content }} />
+    </div>
 }
 
 export default PostViewer

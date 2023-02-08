@@ -1,3 +1,4 @@
+import PostList from "@/components/post-list"
 import PostPreviewer from "@/components/post-previewer"
 import PostDataContext from "@/contexts/post-data-context"
 import { getCategories, getPostList } from "@/data/post-data"
@@ -5,7 +6,6 @@ import { MainLayout } from "@/layouts/main-layout"
 import { Category } from "@/models/category"
 import { Post } from "@/models/post"
 import { GetStaticPaths, GetStaticProps } from "next"
-import styles from "@/styles/post-list.module.scss"
 
 export interface CategoryPostListProps {
     categoryId?: string
@@ -21,9 +21,7 @@ const CategoryPostList = (props: CategoryPostListProps) => {
 
     return <PostDataContext.Provider value={props.categories}>
         <MainLayout>
-            <div className={styles.postList}>
-                {props.posts.map((post, i) => <PostPreviewer key={i} post={post} />)}
-            </div>
+            <PostList posts={props.posts} />
         </MainLayout>
     </PostDataContext.Provider>
 }

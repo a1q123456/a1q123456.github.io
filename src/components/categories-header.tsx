@@ -15,7 +15,6 @@ const CategoriesHeader = () => {
                         query: { categoryId: category.id }
                     }}><span>{category.title}</span></Link>)
                 }
-                <Link className={`${styles.headerItem}`} href='/all'><span>All Posts</span></Link>
             </div>
         </div>
     }

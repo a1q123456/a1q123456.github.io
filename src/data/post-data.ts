@@ -16,6 +16,7 @@ const PREVIEW_FILE_LINES = 30
 
 interface MarkdownMetadata {
     title: string
+    date: string
 }
 
 const renderMd = async (mdContent: string, fullData: boolean) => {
@@ -31,7 +32,8 @@ const renderMd = async (mdContent: string, fullData: boolean) => {
         .process(fullData ? mdContent : mdContent.split('\n').slice(0, PREVIEW_FILE_LINES).join('\n'))
     return {
         title: (result.data.matter as MarkdownMetadata).title,
-        content: result.value
+        content: result.value,
+        createdDateTime: Date.parse((result.data.matter as MarkdownMetadata).date)
     }
 }
 
@@ -53,13 +55,13 @@ const getPostListForCategory = async (categoryId: string) => {
         .map(fileName => path.join(categoryFolder, fileName))
 
     const postList = await Promise.all(fileNames.map(async mdFile => {
-        const { content, title } = await renderMd(await fs.readFile(mdFile, 'utf-8'), false)
+        const { content, title, createdDateTime } = await renderMd(await fs.readFile(mdFile, 'utf-8'), false)
 
         return {
             categoryId: path.basename(path.dirname(mdFile)),
             title,
             id: path.parse(mdFile).name,
-            createdDateTime: (await fs.stat(mdFile)).ctime.getTime(),
+            createdDateTime,
             content
         }
     }))
@@ -69,12 +71,12 @@ const getPostListForCategory = async (categoryId: string) => {
 
 export const getPost = async (categoryId: string, postId: string) => {
     const mdFile = path.join(BLOG_DIR, categoryId, `${postId}.md`)
-    const { content, title } = await renderMd(await fs.readFile(mdFile, 'utf-8'), true)
+    const { content, title, createdDateTime } = await renderMd(await fs.readFile(mdFile, 'utf-8'), true)
     return {
         categoryId: path.basename(path.dirname(mdFile)),
         title,
         id: path.parse(mdFile).name,
-        createdDateTime: (await fs.stat(mdFile)).ctime.getTime(),
+        createdDateTime,
         content
     }
 }
@@ -86,5 +88,5 @@ export const getPostList = async (categoryId?: string) => {
     const posts = await Promise.all((await getCategories())
         .map(async category => await getPostListForCategory(category.id)))
 
-    return posts.flat()
+    return posts.flat().sort((a, b) => b.createdDateTime - a.createdDateTime)
 }
