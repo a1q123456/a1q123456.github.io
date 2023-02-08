@@ -9,6 +9,7 @@ import rehypeStringify from "rehype-stringify";
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { matter } from 'vfile-matter'
+import { Post } from "@/models/post";
 
 
 const BLOG_DIR = path.join(process.cwd(), "blogs")
@@ -32,7 +33,7 @@ const renderMd = async (mdContent: string, fullData: boolean) => {
         .process(fullData ? mdContent : mdContent.split('\n').slice(0, PREVIEW_FILE_LINES).join('\n'))
     return {
         title: (result.data.matter as MarkdownMetadata).title,
-        content: result.value,
+        content: result.value as string,
         createdDateTime: Date.parse((result.data.matter as MarkdownMetadata).date)
     }
 }
@@ -66,7 +67,7 @@ const getPostListForCategory = async (categoryId: string) => {
         }
     }))
 
-    return postList.filter(post => post.categoryId == categoryId)
+    return sortPosts(postList.filter(post => post.categoryId == categoryId))
 }
 
 export const getPost = async (categoryId: string, postId: string) => {
@@ -88,5 +89,9 @@ export const getPostList = async (categoryId?: string) => {
     const posts = await Promise.all((await getCategories())
         .map(async category => await getPostListForCategory(category.id)))
 
-    return posts.flat().sort((a, b) => b.createdDateTime - a.createdDateTime)
+    return sortPosts(posts.flat())
+}
+
+const sortPosts = (posts: Post[]) => {
+    return posts.sort((a, b) => b.createdDateTime - a.createdDateTime)
 }

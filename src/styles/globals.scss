@@ -6,17 +6,18 @@ code {
 
 main {
     width: 100%;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: stretch;
 }
 
 * {
-    font-family: $primary-font-family;
     box-sizing: border-box;
 }
 
 body {
+    font-family: $primary-font-family;
     background-color: $primary-background-color;
     color: $primary-text-color;
 }

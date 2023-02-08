@@ -17,11 +17,9 @@ const PostPage = (props: PostPageProps) => {
         return
     }
 
-    return <PostDataContext.Provider value={props.categories}>
-        <MainLayout>
-            <PostViewer post={props.post} />
-        </MainLayout>
-    </PostDataContext.Provider>
+    return <MainLayout categories={props.categories}>
+        <PostViewer post={props.post} />
+    </MainLayout>
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {

@@ -5,3 +5,8 @@
 .postDate {
     color: $secondary-text-color;
 }
+
+.postViewer {
+    height: 100%;
+    overflow: auto;
+}

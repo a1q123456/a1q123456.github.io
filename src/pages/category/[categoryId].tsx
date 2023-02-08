@@ -19,11 +19,9 @@ const CategoryPostList = (props: CategoryPostListProps) => {
         return
     }
 
-    return <PostDataContext.Provider value={props.categories}>
-        <MainLayout>
-            <PostList posts={props.posts} />
-        </MainLayout>
-    </PostDataContext.Provider>
+    return <MainLayout categories={props.categories}>
+        <PostList posts={props.posts} />
+    </MainLayout>
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {

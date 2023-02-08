@@ -3,6 +3,7 @@
 .header {
     display: flex;
     flex-direction: column;
+    height: $header-bar-height;
 }
 
 .headerTitle {

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import styles from "@/styles/category-header.module.scss"
 
 const CategoriesHeader = () => {
+
     const renderPostHeader = (categories: Category[]) => {
         return <div className={styles.header}>
             <p className={styles.headerTitle}>{"TechBlog();"}</p>

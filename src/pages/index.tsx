@@ -11,11 +11,9 @@ interface HomeProps {
 }
 
 export default function Home(props: HomeProps) {
-    return <PostDataContext.Provider value={props.categories}>
-        <MainLayout>
-            <PostList posts={props.latestPosts} />
-        </MainLayout>
-    </PostDataContext.Provider>
+    return <MainLayout categories={props.categories}>
+        <PostList posts={props.latestPosts} />
+    </MainLayout>
 }
 
 export const getStaticProps = async () => {
