@@ -1,13 +1,13 @@
 ---
-title:  "C++-基于coroutine的异步Socket 一、C++ Coroutine"
+title:  "Asynchorise Socket with C++ Coroutine TS  1. Coroutines in C++"
 date:   2018-08-17 00:00:00
 ---
 
-# Coroutine
+# The coroutine
 
-Coroutine已经确定将加入C++，很久以前Coroutine的概念在其他语言中已经出现，如C#/JS/Python的async/await。写过异步代码的同学一定见识过`Callback Hell`，async/await的出现就是为了避免这样的问题。它可以让异步回调代码看起来像同步代码，但实际上程序执行到await时将返回，不阻塞当前线程。
+Finally, the coroutine feature is set to add to C++. But wait, what does the coroutine do, and why should we use it? The coroutine feature solves the `Callback hell` issue, which most front-end developers probably have experienced. It basically makes the asynchronised code looks like synchronised code but without blocking the executing thread.
 
-如下伪代码将演示什么是`Callback Hell`
+The following code is from a socket server, which uses callback functions to handle new connections with a very basic handshake validation. It basically shows how the `Callback hell` destroys developers' minds.
 
 ```c++
 
@@ -16,12 +16,15 @@ void c1_callback(error_code ec);
 void s2_callback(error_code ec);
 void c2_callback(error_code ec);
 
-auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
-auto self = shared_from_this();
+void handle_connection()
+{
+    auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
+    auto self = shared_from_this();
 
-read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
-    self->s1_callback();
-}});
+    read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
+        self->s1_callback();
+    });
+}
 
 void s1_callback(error_code ec)
 {
@@ -30,7 +33,7 @@ void s1_callback(error_code ec)
     auto c1 = make_handshake_c1();
     send_async(socket, c1.get(), c1.size(), [=](){
         self->c1_callback();
-    }});
+    });
 }
 
 void c1_callback(error_code ec)
@@ -40,7 +43,7 @@ void c1_callback(error_code ec)
     auto s2_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S2_SIZE]);
     read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
         self->s2_callback();
-    }});
+    });
 }
 
 void s2_callback(error_code ec)
@@ -50,7 +53,7 @@ void s2_callback(error_code ec)
     auto c2 = make_handshake_c2();
     send_async(socket, c2.get(), c2.size(), [=](){
         self->c2_callback();
-    }});
+    });
 }
 
 void c2_callback(error_code ec)
@@ -66,8 +69,9 @@ void c2_callback(error_code ec)
 }
 ```
 
+Clearly, those callback functions have made the code hard to follow and unnecessarily split a whole piece of logic into a lot of functions just for the mechanism.
 
-不难看出，回调函数虽然可以实现异步，但是把代码变得非常难以阅读，使用asycn/await优化以后的代码如下：
+With the coroutine feature, we could refactor the above code to this:
 
 ```c++
 
@@ -78,7 +82,7 @@ co_await read_async(socket, s1_buffer.get(), sizeof(s1_buffer));
 auto c1 = make_handshake_c1();
 co_await send_async(socket, c1.get(), c1.size());
 
-BYTE s2_buffer[HANDSHAKE_S2_SIZE]);
+BYTE s2_buffer[HANDSHAKE_S2_SIZE];
 co_await read_async(socket, s2_buffer.get(), sizeof(s2_buffer.size));
 
 auto c2 = make_handshake_c2();
@@ -95,4 +99,4 @@ else
 
 ```
 
-通过对比两段代码，可以发现，使用了co_await的代码更加易读，C#中的async/await是将`await`后面的代码转换为回调函数，本质是一种语法糖，但C++中的`co_await`允许用户自己定义await时的行为。下一节会介绍如何定义`co_await`时的行为并通过C++ Coroutine实现await
+The above code is a lot easier to understand, except that the `co_await` is completely new to us. We'll discuss this new keyword and how to interact with it in the next blog. 
