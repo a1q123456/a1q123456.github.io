@@ -1,0 +1,24 @@
+@import "@/styles/variables.module.scss";
+
+code {
+    font-family: $code-font-family !important;
+}
+
+main {
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+* {
+    font-family: $primary-font-family;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: $primary-background-color;
+    color: $primary-text-color;
+}
+
+

@@ -1,7 +1,16 @@
+$small-sreen-dimension: 600px;
 
 $brand-font-size: 2rem;
+
+$code-font-family: 'Cascadia Code', 'Consolas', 'monospace', sans-serif;
+$primary-font-family: 'Helvetica Neu', 'Arial', sans-serif;
+
+$primary-text-color: #262626;
 
 $link-color: #5a5a5a;
 $link-color-hover: lighten($link-color, 30%);
 $link-color-pressed: $link-color-hover;
 
+$secondary-text-color: lighten($primary-text-color, 60%);
+
+$primary-background-color: #fcfcfc;

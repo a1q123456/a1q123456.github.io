@@ -6,7 +6,7 @@ import styles from "@/styles/category-header.module.scss"
 const CategoriesHeader = () => {
     const renderPostHeader = (categories: Category[]) => {
         return <div className={styles.header}>
-            <p className={styles.headerTitle}><code>{"TechBlog();"}</code></p>
+            <p className={styles.headerTitle}>{"TechBlog();"}</p>
             <div className={styles.headerItemList}>
                 <Link className={`${styles.headerItem}`} href='/'><span>Home</span></Link>
                 {

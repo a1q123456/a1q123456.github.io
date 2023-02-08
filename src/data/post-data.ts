@@ -4,7 +4,6 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
-import rehypeDocument from "rehype-document";
 import rehypeFormat from "rehype-format";
 import rehypeStringify from "rehype-stringify";
 import remarkFrontmatter from "remark-frontmatter";
@@ -22,14 +21,13 @@ interface MarkdownMetadata {
 const renderMd = async (mdContent: string, fullData: boolean) => {
     const result = await remark()
         .use(remarkParse)
-        .use(remarkRehype)
-        .use(rehypeDocument)
-        .use(rehypeFormat)
-        .use(rehypeStringify)
-        .use(rehypeHighlight)
+        .use(remarkGfm)
         .use(remarkFrontmatter, ['yaml', 'toml'])
         .use(() => (_, file) => { matter(file) })
-        .use(remarkGfm)
+        .use(remarkRehype)
+        .use(rehypeFormat)
+        .use(rehypeHighlight)
+        .use(rehypeStringify)
         .process(fullData ? mdContent : mdContent.split('\n').slice(0, PREVIEW_FILE_LINES).join('\n'))
     return {
         title: (result.data.matter as MarkdownMetadata).title,

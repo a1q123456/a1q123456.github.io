@@ -8,13 +8,14 @@
 .headerTitle {
     font-size: $brand-font-size;
     text-align: center;
+    font-family: $code-font-family;
 }
 
 .headerItem {
     display: inline-flex;
     flex-grow: 1;
     text-decoration: none;
-    height: 50px;
+    height: 3rem;
     align-items: center;
     justify-content: center;
     color: $link-color;
@@ -30,7 +31,19 @@
 }
 
 .headerItemList {
-    padding: 0 20vw;
     display: flex;
     flex-wrap: nowrap;
+}
+
+@media only screen and (min-width: $small-sreen-dimension) {
+    .headerItemList {
+        padding: 0 20vw;
+    }
+}
+
+@media only screen and (max-width: $small-sreen-dimension) {
+    .headerItemList {
+        padding: 0 30px;
+    }
+    
 }
