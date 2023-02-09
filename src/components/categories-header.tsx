@@ -14,7 +14,7 @@ const CategoriesHeader = () => {
             <input type="checkbox" hidden className={styles.headerExpandToggle} id="header-expand-toggle" />
             <p className={styles.headerTitle}>
                 <span>TechBlog()</span>
-                <a rel="noopener" target="_blank" className={styles.linkedIn} href="https://www.linkedin.com/in/jingchen-wu-95500213b/">
+                <a rel="noreferrer" target="_blank" className={styles.linkedIn} href="https://www.linkedin.com/in/jingchen-wu-95500213b/">
                     <Image src={linkedInLogo} alt="LinkedIn" />
                     Connect me on LinedIn
                 </a></p>
