@@ -1,9 +1,9 @@
-import PostDataContext from '@/contexts/post-data-context'
 import { Category } from '@/models/category'
 import { MainLayout } from '@/layouts/main-layout'
 import { getCategories, getPostList } from '@/data/post-data'
 import PostList from '@/components/post-list'
 import { Post } from '@/models/post'
+import Scroller from '@/components/scroller'
 
 interface HomeProps {
     categories: Category[]
@@ -12,7 +12,9 @@ interface HomeProps {
 
 export default function Home(props: HomeProps) {
     return <MainLayout categories={props.categories}>
-        <PostList posts={props.latestPosts} />
+        <Scroller>
+            <PostList posts={props.latestPosts} />
+        </Scroller>
     </MainLayout>
 }
 

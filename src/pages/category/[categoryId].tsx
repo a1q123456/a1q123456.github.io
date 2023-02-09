@@ -1,6 +1,5 @@
 import PostList from "@/components/post-list"
-import PostPreviewer from "@/components/post-previewer"
-import PostDataContext from "@/contexts/post-data-context"
+import Scroller from "@/components/scroller"
 import { getCategories, getPostList } from "@/data/post-data"
 import { MainLayout } from "@/layouts/main-layout"
 import { Category } from "@/models/category"
@@ -20,7 +19,9 @@ const CategoryPostList = (props: CategoryPostListProps) => {
     }
 
     return <MainLayout categories={props.categories}>
-        <PostList posts={props.posts} />
+        <Scroller>
+            <PostList posts={props.posts} />
+        </Scroller>
     </MainLayout>
 }
 
