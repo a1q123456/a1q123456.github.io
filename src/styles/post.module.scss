@@ -1,0 +1,8 @@
+@import "@/styles/variables.module.scss";
+
+@include add-main-body-padding(".postWrapper");
+
+.postWrapper {
+    height: 100%;
+    overflow: auto;
+}

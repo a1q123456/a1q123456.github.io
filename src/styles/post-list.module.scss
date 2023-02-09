@@ -15,6 +15,7 @@
     display: block;
     color: $primary-text-color;
     text-decoration: none;
+    transition: transform 0.5s;
 }
 
 .postLinkButton>div {
@@ -38,7 +39,11 @@
     z-index: 11;
 }
 
-.active::after {
+.mask {
+    display: none;
+}
+
+.active ~  .mask {
     content: '';
     display: block;
     position: fixed;

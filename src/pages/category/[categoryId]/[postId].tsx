@@ -1,10 +1,10 @@
 import PostViewer from "@/components/post-viewer"
-import PostDataContext from "@/contexts/post-data-context"
 import { getCategories, getPost, getPostList } from "@/data/post-data"
 import { MainLayout } from "@/layouts/main-layout"
 import { Category } from "@/models/category"
 import { Post } from "@/models/post"
 import { GetStaticPaths, GetStaticProps } from "next"
+import styles from '@/styles/post.module.scss'
 
 export interface PostPageProps {
     categoryId?: string
@@ -18,7 +18,9 @@ const PostPage = (props: PostPageProps) => {
     }
 
     return <MainLayout categories={props.categories}>
-        <PostViewer post={props.post} />
+        <div className={styles.postWrapper}>
+            <PostViewer post={props.post} />
+        </div>
     </MainLayout>
 }
 

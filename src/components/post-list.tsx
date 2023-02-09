@@ -1,8 +1,8 @@
 import { Post } from "@/models/post"
-import PostPreviewer from "./post-previewer"
 import styles from "@/styles/post-list.module.scss"
 import { useRouter } from "next/router"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import PostViewer from "./post-viewer"
 
 export interface PostListProps {
     posts: Post[]
@@ -10,7 +10,12 @@ export interface PostListProps {
 
 const PostList = (props: PostListProps) => {
     const router = useRouter()
+    const itemsRef = useRef<HTMLDivElement[]>([]);
     const [activePost, setActivePost] = useState<[string, string]>()
+
+    useEffect(() => {
+       itemsRef.current = itemsRef.current.slice(0, props.posts.length);
+    }, [props.posts]);
 
     const isActive = (categoryId: string, postId: string) => {
         if (!activePost) {
@@ -36,11 +41,13 @@ const PostList = (props: PostListProps) => {
     return <div className={styles.postList}>
         {props.posts.map((post, i) => <div
             key={i}
+            ref={r => r ? itemsRef.current[i] = r : null}
             className={`${styles.postLinkButton}  ${isActive(post.categoryId, post.id) ? styles.active : ''}`}
-            onClick={e => navigateToPost(e.target as HTMLElement, post.categoryId, post.id)}>
-            <PostPreviewer post={post} />
+            onClick={e => navigateToPost(itemsRef.current[i], post.categoryId, post.id)}>
+            <PostViewer post={post} previewMode />
         </div>)
         }
+        <div className={styles.mask} />
     </div>
 }
 
