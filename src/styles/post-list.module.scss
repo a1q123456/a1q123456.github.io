@@ -34,6 +34,10 @@
     display: none;
 }
 
+.active {
+    z-index: 11;
+}
+
 .active::after {
     content: '';
     display: block;
