@@ -1,5 +1,6 @@
 ---
-title:  "Asynchorise Socket with C++ Coroutine TS  1. Coroutines in C++"
+title:  "Asynchorise Socket with C++ Coroutine TS"
+subtitle: "Part 1 Coroutines in C++"
 date:   2018-08-17 00:00:00
 ---
 

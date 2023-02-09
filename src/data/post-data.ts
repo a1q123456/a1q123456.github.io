@@ -18,6 +18,7 @@ const PREVIEW_FILE_LINES = 30
 interface MarkdownMetadata {
     title: string
     date: string
+    subtitle?: string
 }
 
 const renderMd = async (mdContent: string, fullData: boolean) => {
@@ -32,9 +33,9 @@ const renderMd = async (mdContent: string, fullData: boolean) => {
         .use(rehypeStringify)
         .process(fullData ? mdContent : mdContent.split('\n').slice(0, PREVIEW_FILE_LINES).join('\n'))
     return {
-        title: (result.data.matter as MarkdownMetadata).title,
+        ...(result.data.matter as MarkdownMetadata),
         content: result.value as string,
-        createdDateTime: Date.parse((result.data.matter as MarkdownMetadata).date)
+        date: Date.parse((result.data.matter as MarkdownMetadata).date)
     }
 }
 
@@ -56,14 +57,12 @@ const getPostListForCategory = async (categoryId: string) => {
         .map(fileName => path.join(categoryFolder, fileName))
 
     const postList = await Promise.all(fileNames.map(async mdFile => {
-        const { content, title, createdDateTime } = await renderMd(await fs.readFile(mdFile, 'utf-8'), false)
+        const rendered = await renderMd(await fs.readFile(mdFile, 'utf-8'), false)
 
         return {
             categoryId: path.basename(path.dirname(mdFile)),
-            title,
             id: path.parse(mdFile).name,
-            createdDateTime,
-            content
+            ...rendered
         }
     }))
 
@@ -72,13 +71,11 @@ const getPostListForCategory = async (categoryId: string) => {
 
 export const getPost = async (categoryId: string, postId: string) => {
     const mdFile = path.join(BLOG_DIR, categoryId, `${postId}.md`)
-    const { content, title, createdDateTime } = await renderMd(await fs.readFile(mdFile, 'utf-8'), true)
+    const rendered = await renderMd(await fs.readFile(mdFile, 'utf-8'), true)
     return {
         categoryId: path.basename(path.dirname(mdFile)),
-        title,
         id: path.parse(mdFile).name,
-        createdDateTime,
-        content
+        ...rendered
     }
 }
 
@@ -93,5 +90,5 @@ export const getPostList = async (categoryId?: string) => {
 }
 
 const sortPosts = (posts: Post[]) => {
-    return posts.sort((a, b) => b.createdDateTime - a.createdDateTime)
+    return posts.sort((a, b) => b.date - a.date)
 }

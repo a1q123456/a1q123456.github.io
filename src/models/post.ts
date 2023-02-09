@@ -3,6 +3,7 @@ export interface Post {
     id: string
     categoryId: string
     title: string
+    subtitle?: string
     content: string
-    createdDateTime: number
+    date: number
 }

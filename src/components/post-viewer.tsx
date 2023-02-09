@@ -9,7 +9,8 @@ export interface PostViewerProps {
 const PostViewer = (props: PostViewerProps) => {
     return <div className={styles.postViewer}>
         <h1>{props.post.title}</h1>
-        <h6 className={styles.postDate}>{formatDateTime(props.post.createdDateTime)}</h6>
+        {props.post.subtitle ? <h2>{props.post.subtitle}</h2> : null}
+        <h6 className={styles.postDate}>{formatDateTime(props.post.date)}</h6>
         <div dangerouslySetInnerHTML={{ __html: props.post.content }} />
     </div>
 }

@@ -1,82 +1,60 @@
 ---
-title:  "C++-基于coroutine的异步Socket 二、实现Coroutine"
+title:  "Asynchorise Socket with C++ Coroutine TS"
+subtitle: "Part 2 Implement your Coroutine."
 date:   2018-08-19 00:00:00
 ---
 
-# Promise/Future
+# Promise and Future
 
-为了给异步函数提供更加统一规范的回调方式，通常使用Promise/Future来让异步函数通知调用方是否有结果或异常。Promise作为异步函数给调用方的通信端口，拥有设置结果、设置异常的功能；Future作为调用方获取异步结果的端口，拥有获取结果、获取异常的功能。
+Before we dive into the coroutine itself, we should get familiar with the `Promise` and the `Future`. Compared with callbacks, the `Promise` provides a **consistent** way to return a result or an error in a non-blocking function, and the `Future` provides a **consistent** way to retrieve them.
 
 ```c++
 
 future<int> do_something_async(int a)
 {
-    promise<int> p;
+    std::shared_promise<int> p;
 
-    queue_user_work_item([p = std::move(p), a]
+    // A non-blocking function using callback functions
+    // This function is from a library, and the first parameter of the callback function is the result 
+    // and the second one is the errorCode
+    nonblocking_fetch_data_from_db([p, a](int result, int errorCode)
     {
-        using namespace std::chrono_literals;
-        sleep(10s);
-        p.set_result(a);
+        // This function is from another library, and the first parameter of the callback function is an 
+        // errorCode but with a different type, and the second parameter is the file data
+        nonblocking_read_file([p](error_code errorCode, const std::string& fileData)
+        {
+            p.set_result(std::stoi(fileData));
+        });
     });
+
     return p.get_future();
 }
 
-auto f = do_something_async(1);
+auto future = do_something_async(1);
 
-/////////////////////////////////////
+// With the `Future` class, we can always retrieve the result and the error code like the following.
+// The first parameter is always the result, and the second one is always an errorCode.
+// We can imagine our lives would be a bit easier if all non-blocking functions were to return `Futures`
+// instead of using callback functions.
+future.then([=](int result, const error_code ec) {
+    if (ec) {
+        // handle the error
+        return;
+    }
 
-// wait result
-while (!f.ready())
-    ;
-if (f.has_result())
-{
-    print(f.result());
-}
-// has exception
-else
-{
-    try
-    {
-        f.rethrow();
-    }
-    catch(const exception& e)
-    {
-        std::cout << e.what() << std::endl;
-    }
-}
-
-// or
-
-// use callback
-f.then([=]{
-    print(f.result());
-}).catch([=] (exception_ptr ep)
-{
-    try
-    {
-        rethrow(ep);
-    }
-    catch(const exception& e)
-    {
-        std::cout << e.what() << std::endl;
-    }
+    // process the result
 });
+
 /////////////////////////////////////
 ```
 
-# Coroutine Traits
+# Coroutine
 
-在C++中，一个带有`co_yield`、`co_await`、`co_reture`语句的函数，会被编译器识别为Coroutine。
+With the latest Coroutine TS, any function that contains `co_yield` and `co_await` and `co_reture` will be treated as a coroutine function. The stack (`Context`) of a coroutine function will be allocated on the heap with `operator new`.
 
-因此，runtime必须要知道
-* 什么时候需要从当前`Context`中切换出来
-* 什么时候返回
-* 如何获取返回值
+Since you may have your own version of `Promise` and `Future`, we need to have a way to tell the C++ runtime about how to interact with a coroutine, and the way is to use `std::coroutine_traits<T>`.
 
-这意味着程序必须提供一个桥梁，与runtime进行交互，而这个桥梁就是`coroutine_traits`。用户实现`coroutine_traits`的特化，让`Promise`与runtime适配。
-
-一个完整的`coroutine_traits`至少应该这样实现：
+A basic `std::coroutine_traits<T>` should be implemented like this:
 
 ```c++
 
@@ -116,16 +94,16 @@ namespace std
             }
             ///////////////////
 
-            void set_exception(std::exception_ptr _Exc)
+            void set_exception(std::exception_ptr exc)
             {
-                promise.SetException(_STD move(_Exc));
+                promise.SetException(std::move(exc));
             }
         };
     };
 }
 ```
 
-其中`Future`类型至少需要这样实现：
+And the `Future` type should at least be implemented like this:
 ```c++
 
 template <typename T>
@@ -150,7 +128,7 @@ struct Future
     T await_resume()
     {
         return std::move(_state->result);
-        // or
+        // or if T is void
         return;
     }
 
@@ -163,26 +141,21 @@ struct Future
         }
     }
 }
-
 ```
 
-
-编译器需要：
-
-* 用`coroutine_traits<Future<T>>::promise_type`来获取`Promise`的类型
-* 用`coroutine_traits<Future<T>>::promise_type::get_return_object()`来构造返回值
-* 用`coroutine_traits<Future<T>>::promise_type::initial_suspend()`来判断是否需要在开始调用函数时立即执行函数
-* 用`coroutine_traits<Future<T>>::promise_type::final_suspend()`来判断是否需要在函数返回时立即清理`Context`
-* 通过判断用户实现的是`coroutine_traits<Future<T>>::promise_type::return_value()`还是`coroutine_traits<Future<T>>::promise_type::return_void()`来判断返回值是否为`void`
-* 用`coroutine_traits<Future<T>>::promise_type::return_value()`或`coroutine_traits<Future<T>>::promise_type::return_void()`来替换co_return语句，让Coroutine返回结果
-* 用`coroutine_traits<Future<T>>::promise_type::set_exception()`来给Coroutine设置异常
-* 用`Future::await_ready()`来判断是否需要切换`Context`
-* 用`Future::await_suspend()`来提供给用户返回当前`Context`的Handler `coroutine_handle`
-* 用`Future::await_resume()`来获取返回值
+To interact with the C++ runtime, we define the following:
+* `coroutine_traits<Future<T>>::promise_type` to tell the C++ runtime about the type of the `Promise`;
+* `coroutine_traits<Future<T>>::promise_type::get_return_object()` to create the actual return value of a coroutine function;
+* `coroutine_traits<Future<T>>::promise_type::initial_suspend()` to tell the C++ runtime whether to execute the coroutine function immediately;
+* `coroutine_traits<Future<T>>::promise_type::final_suspend()` to tell the C++ runtime whether to destroy the `Context` immediately when the coroutine function has been executed;
+* `coroutine_traits<Future<T>>::promise_type::return_value()` and `coroutine_traits<Future<T>>::promise_type::return_void()`to let the C++ runtime get the return value;
+* `coroutine_traits<Future<T>>::promise_type::set_exception()` to throw an exception;
+* `Future::await_ready()` to tell the C++ runtime whether the result is immediately ready, which improves the performance if we don't need to wait;
+* `Future::await_suspend()` to get a `coroutine_handle`, which can be used to resume from the suspension point (Where the `co_await` is executed);
+* `Future::await_resume()` to give back the actual result to the C++ runtime.
 
 
-现在，可以用`Coroutine`来改写异步函数`do_something_async`
-
+With the above knowledge, we can now rewrite `do_something_async` with our `Coroutine` class:
 ```c++
 Future<int> do_something_async(int a)
 {
@@ -191,8 +164,8 @@ Future<int> do_something_async(int a)
     co_return a;
 }
 ```
-编译器在编译这段代码时，会通过类似与如下的转换，来实现`Coroutine`
 
+When the compiler compiles the code, it transfers the code to the code like the following:
 ```c++
 Future<int> do_something_async(int a)
 {
@@ -214,7 +187,7 @@ __exit:
 }
 ```
 
-其中`co_await`、`co_return`和`throw`会进一步转换为：
+Then, the `co_await`, the `co_return` and the `throw` statements in the above code get transferred further to:
 ```c++
 Future<int> do_something_async(int a)
 {
@@ -246,80 +219,9 @@ __exit:
 }
 ```
 
-
-# Dynamically Allocated Context
-
-考虑一下上一节的例子：
-
-
-```c++
-
-void s1_callback(error_code ec);
-void c1_callback(error_code ec);
-void s2_callback(error_code ec);
-void c2_callback(error_code ec);
-
-// Dynamically Allocated
-auto s1_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S1_SIZE]);
-auto self = shared_from_this();
-
-read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
-    self->s1_callback();
-}});
-
-void s1_callback(error_code ec)
-{
-    // do something
-
-    // Dynamically Allocated
-    auto c1 = make_handshake_c1();
-    send_async(socket, c1.get(), c1.size(), [=](){
-        self->c1_callback();
-    }});
-}
-
-void c1_callback(error_code ec)
-{
-    // do something
-
-    // Dynamically Allocated
-    auto s2_buffer = std::shared_ptr<BYTE[]>(new BYTE[HANDSHAKE_S2_SIZE]);
-    read_async(socket, s1_buffer.get(), s1_buffer.size(), [=](){
-        self->s2_callback();
-    }});
-}
-
-void s2_callback(error_code ec)
-{
-    // do something
-
-    // Dynamically Allocated
-    auto c2 = make_handshake_c2();
-    send_async(socket, c2.get(), c2.size(), [=](){
-        self->c2_callback();
-    }});
-}
-
-void c2_callback(error_code ec)
-{
-    if (validate(s1, c1, s2, c2))
-    {
-        start_session();
-    }
-    else
-    {
-        disconnect();
-    }
-}
-```
-
-在使用异步函数的时候，所有的`Context Variable`（参数、返回值、要发送的buffer、`this`等），都必须动态分配，否则当异步函数返回的时候，`Context Variable`将会被销毁，异步函数的执行就会出错。因此，C++的Croutine实质上使用了`operator new`分配了Coroutine函数的`Context`。
-
-
 # Coroutine Handle
 
-`Coroutine Handle`可以用来手动销毁一个Coroutine，或返回Coroutine的`Context`，Coroutine Handle由C++ Runtime构造。Coroutine Handle是这样定义的：
-
+A `Coroutine Handle` can be used to resume from where the `co_await` in the coroutine function gets executed or destroyed the `Context` of a coroutine function. It's created by the C++ runtime, and the definition looks like the following:
 ```c++
 template <typename T>
 struct coroutine_handle<T>
@@ -337,13 +239,13 @@ struct coroutine_handle<T>
 };
 ```
 
-其中
-* `address()`、`from_address()`函数用来将`coroutine_handle`转换为`void*`和从`void*`转换回`coroutine_handle`，主要用来跟C库进行交互
-* `resume()`与`operator()()`用来切换回`Coroutine`的`Context`
-* `operator bool()`用来判断当前`coroutine_handle`是否为空
-* `destroy`用来手动销毁Coroutine的`Context`
-* `done`用来判断当前`Coroutine`是否已经执行完成。
+The C++ runtime uses:
+* `address()` and `from_address()` to provide a way to convert a `coroutine_handle` to a pointer and to convert it back, which can be used with libraries written in C;
+* `resume()` and `operator()()` to provide a way to resume to where the `co_await` gets executed;
+* `operator bool()` to provide a way to tell whether the `coroutine_handle` is empty;
+* `destroy` to provide a way to destroy itself manually;
+* `done` to tell whether the coroutine function has been executed.
 
-多半情况下，用户不需要手动调用`destroy`方法，但是假如用户需要手动销毁`Coroutine`(通常为`final_suspend`为`true`或`suspend_always`的时候)，就需要调用`destroy`方法来销毁`Context`。
+Developers don't need to call the `destroy()` to destroy the coroutine context if the `final_suspend` doesn't return `suspend_always`.
 
-最终的Coroutine实现，可以参考笔者的[代码](https://github.com/a1q123456/AsyncIocpSocket/blob/master/AsyncIocpSocket/Await.h)
+The final implementation of a coroutine can be found from [here](https://github.com/a1q123456/AsyncIocpSocket/blob/master/AsyncIocpSocket/Await.h).

@@ -11,7 +11,8 @@ const PostPreviewer = (props: PostPreviewerProps) => {
     return <div className={styles.postItem}>
         <div className={styles.postPresenter}>
             <h1>{props.post.title}</h1>
-            <h6 className={styles.postDate}>{formatDateTime(props.post.createdDateTime)}</h6>
+        {props.post.subtitle ? <h2>{props.post.subtitle}</h2> : null}
+            <h6 className={styles.postDate}>{formatDateTime(props.post.date)}</h6>
             <div dangerouslySetInnerHTML={{ __html: props.post.content }} />
         </div>
     </div>
