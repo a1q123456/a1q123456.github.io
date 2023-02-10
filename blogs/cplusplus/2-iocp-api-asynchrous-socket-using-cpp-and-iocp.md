@@ -6,7 +6,7 @@ date:   2018-08-26 00:00:00
 
 Almost every IO-related API in Windows allows an `Overlapped` parameter, allowing developers to call the APIs asynchronously.
 
-Before discussing the IOCP APIs, it is necessary to introduce APIs for creating and interacting with thread pools. Those functions will help developers to use the callback mechanism of IOCP APIs.
+Before discussing the IOCP APIs, it is necessary to introduce APIs for creating and interacting with thread pools. Those functions help developers to use the callback mechanism of IOCP APIs.
 
 An ordinary practice of using IOCP for asynchronous IO is as follows:
 1. Start an IO thread pool, and bind it to a socket;
