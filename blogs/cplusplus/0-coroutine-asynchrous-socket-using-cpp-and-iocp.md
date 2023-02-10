@@ -1,12 +1,12 @@
 ---
-title:  "Asynchorise Socket with C++ Coroutine TS"
+title:  "Asynchronous Socket with C++ Coroutine TS"
 subtitle: "Part 1 Coroutines in C++"
 date:   2018-08-17 00:00:00
 ---
 
 # The coroutine
 
-Finally, the coroutine feature is set to add to C++. But wait, what does the coroutine do, and why should we use it? The coroutine feature solves the `Callback hell` issue, which most front-end developers probably have experienced. It basically makes the asynchronised code looks like synchronised code but without blocking the executing thread.
+Finally, the coroutine feature is set to add to C++. But wait, what does the coroutine do, and why should we use it? The coroutine feature solves the `Callback hell` issue, which most front-end developers probably have experienced. It basically makes the asynchronous code looks like synchronised code but without blocking the executing thread.
 
 The following code is from a socket server, which uses callback functions to handle new connections with a very basic handshake validation. It basically shows how the `Callback hell` destroys developers' minds.
 

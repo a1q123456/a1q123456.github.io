@@ -1,5 +1,5 @@
 ---
-title:  "Asynchorise Socket with C++ Coroutine TS"
+title:  "Asynchronous Socket with C++ Coroutine TS"
 subtitle: "Part 2 Implement your Coroutine."
 date:   2018-08-19 00:00:00
 ---
@@ -144,12 +144,12 @@ struct Future
 ```
 
 To interact with the C++ runtime, we define the following:
-* `coroutine_traits<Future<T>>::promise_type` to tell the C++ runtime about the type of the `Promise`;
-* `coroutine_traits<Future<T>>::promise_type::get_return_object()` to create the actual return value of a coroutine function;
-* `coroutine_traits<Future<T>>::promise_type::initial_suspend()` to tell the C++ runtime whether to execute the coroutine function immediately;
-* `coroutine_traits<Future<T>>::promise_type::final_suspend()` to tell the C++ runtime whether to destroy the `Context` immediately when the coroutine function has been executed;
-* `coroutine_traits<Future<T>>::promise_type::return_value()` and `coroutine_traits<Future<T>>::promise_type::return_void()`to let the C++ runtime get the return value;
-* `coroutine_traits<Future<T>>::promise_type::set_exception()` to throw an exception;
+* `promise_type` to tell the C++ runtime about the type of the `Promise`;
+* `promise_type::get_return_object()` to create the actual return value of a coroutine function;
+* `promise_type::initial_suspend()` to tell the C++ runtime whether to execute the coroutine function immediately;
+* `promise_type::final_suspend()` to tell the C++ runtime whether to destroy the `Context` immediately when the coroutine function has been executed;
+* `promise_type::return_value()` and `promise_type::return_void()` to let the C++ runtime get the return value;
+* `promise_type::set_exception()` to throw an exception;
 * `Future::await_ready()` to tell the C++ runtime whether the result is immediately ready, which improves the performance if we don't need to wait;
 * `Future::await_suspend()` to get a `coroutine_handle`, which can be used to resume from the suspension point (Where the `co_await` is executed);
 * `Future::await_resume()` to give back the actual result to the C++ runtime.
@@ -248,4 +248,4 @@ The C++ runtime uses:
 
 Developers don't need to call the `destroy()` to destroy the coroutine context if the `final_suspend` doesn't return `suspend_always`.
 
-The final implementation of a coroutine can be found from [here](https://github.com/a1q123456/AsyncIocpSocket/blob/master/AsyncIocpSocket/Await.h).
+The final implementation of a coroutine can be found on [here](https://github.com/a1q123456/AsyncIocpSocket/blob/master/AsyncIocpSocket/Await.h).
