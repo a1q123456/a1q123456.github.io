@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import linkedInLogo from '@/images/LI-In-Bug.png'
+import githubLogo from '@/images/github-mark.svg'
 import Image from "next/image"
 import styles from "@/styles/category-header.module.scss"
 
@@ -12,12 +13,17 @@ const CategoriesHeader = () => {
     const renderPostHeader = (categories: Category[]) => {
         return <div className={styles.header}>
             <input type="checkbox" hidden className={styles.headerExpandToggle} id="header-expand-toggle" />
-            <p className={styles.headerTitle}>
-                <span>TechBlog()</span>
+            <p className={styles.headerTitle}>TechBlog()</p>
+            <div className={styles.socalProfilesWrapper}>
                 <a rel="noreferrer" target="_blank" className={styles.linkedIn} href="https://www.linkedin.com/in/jingchen-wu-95500213b/">
                     <Image src={linkedInLogo} alt="LinkedIn" />
-                    Connect me on LinedIn
-                </a></p>
+                    <span>LinedIn</span>
+                </a>
+                <a rel="noreferrer" target="_blank" className={styles.github} href="https://github.com/a1q123456">
+                    <Image src={githubLogo} alt="Github" />
+                    <span>Github</span>
+                </a>
+            </div>
             <label htmlFor="header-expand-toggle" className={styles.headerItemButton}>
                 <FontAwesomeIcon icon={faBars} />
             </label>

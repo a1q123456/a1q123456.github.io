@@ -5,6 +5,7 @@ import { Category } from "@/models/category"
 import { Post } from "@/models/post"
 import { GetStaticPaths, GetStaticProps } from "next"
 import styles from '@/styles/post.module.scss'
+import Scroller from "@/components/scroller"
 
 export interface PostPageProps {
     categoryId?: string
@@ -18,9 +19,9 @@ const PostPage = (props: PostPageProps) => {
     }
 
     return <MainLayout categories={props.categories}>
-        <div className={styles.postWrapper}>
+        <Scroller className={styles.postWrapper}>
             <PostViewer post={props.post} />
-        </div>
+        </Scroller>
     </MainLayout>
 }
 

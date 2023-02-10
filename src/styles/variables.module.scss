@@ -22,15 +22,18 @@ $primary-background-color: #fcfcfc;
     
     #{$selector} {
         @media only screen and (max-width: $small-sreen-dimension) {
-            padding: 0 1.5rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
         }
 
         @media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
-            padding: 0 15vw;
+            padding-left: 15vw;
+            padding-right: 15vw;
         }
         
         @media only screen and (min-width: $large-sreen-dimension) {
-            padding: 0 20vw;
+            padding-left: 20vw;
+            padding-right: 20vw;
         }
     }
 }
