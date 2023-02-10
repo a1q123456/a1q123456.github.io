@@ -1,13 +1,16 @@
 ---
-title:  "C++-使用C++实现依赖注入框架 一、Parameter Placeholder"
+title:  "Creating a Dependency Injection Library in C++"
+subtitle: "Part 1 Parameter Placeholders"
 date:   2018-08-26 00:00:00
 ---
 
-在其他语言中，我们常用反射机制来实现依赖注入，而C++没有反射，因此，使用C++实现依赖注入就相对麻烦一些了。幸好，我们可以通过元编程来替代反射的功能。
+In other programming languages, developers use the reflection mechanism to implement dependency injection libraries. However, the static reflection features have not been added to C++ yet. However, it does not mean there are no ways to achieve it in C++. This article is to discuss a new method being able to achieve dependency injection in C++.
 
-依赖注入最关键的地方在于，获取要注入的类型的构造函数的参数类型，然后再构造这些参数，最后利用这些参数构造要注入的类型。
+The most challenging part of doing dependency injection is getting the type of services needed by the class being injected. There are no ways to do this in C++. However, developers may use template meta-programming and implicitly type conversion to achieve it.
 
-C++中显然不能直接的获取某个类型的构造函数的参数类型，但是，我们可以通过类型转换来间接的获取。当构造对象或调用函数的时候，编译器会自动尝试将类型不匹配的参数转换为目标类型。假如调用构造对象时，我们让一个类型可以自动转换到所有需要的构造函数参数的类型，那就实现了依赖注入中获取构造函数参数类型的这一步了，示例代码如下：
+Imagine type `PlaceHolder` can be converted to any other type, and type `A` accepts four different types of parameters to construct itself, then four objects of `A` can be used to create an instance of type `B`.
+
+E.g.
 
 ```c++
 
@@ -19,26 +22,25 @@ struct A
     }
 };
 
-// 调用构造函数
+// The normal way to create an object of `A`
 A a(1, true, 1.2, 3); 
-
 
 struct PlaceHolder
 {
-    // 使用模板，让PlaceHolder可以转换为任意类型
+    // The type `PlaceHolder` now supprts to be converted to any types
     template <typename  T>
     operator T()
     {
-        // 先暂时通过T类型的默认构造函数构造T类型的对象
-        return T();
+        // Return an object of `T`
+        return T{};
     }
 }
 
-PlaceHolder p;
-
-// 依然可以构造，编译器会自动调用 operator T，将PlaceHolder类型转换为T类型
-A a(p, p, p, p);
+// It is still valid.
+// The compiler calls `operator T()` to convert `PlaceHolder{}` 
+// to an int value, a bool value, a double value and an int value.
+A a(PlaceHolder{}, PlaceHolder{}, PlaceHolder{}, PlaceHolder{});
 
 ```
 
-这样一来，依赖注入的第一步，获取构造函数的类型，就实现完成了。当需要注入一个类型的时候，只要给这个类型传入符合参数个数的PlaceHolder类型，就可以完成依赖的注入了。
+In the above case, the `PlaceHolder` type can be used as an `Injector` to inject `A`. Now, the only issue is getting the number of parameters that the constructor of `A` accepts.
