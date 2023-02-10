@@ -30,7 +30,7 @@ PTP_IO CreateThreadpoolIo(
 
 The documentation of this API can be found on [here](https://docs.microsoft.com/en-us/windows/desktop/api/threadpoolapiset/nf-threadpoolapiset-createthreadpoolio).
 
-Developers use this API to create an IO thread pool which is designed for handling IO operations. The first parameter `fl` is a file handle. e.g. File Handles, Sockets or etc. The second parameter `pfnio` is a callback function for handling IO completion events. The third parameter `pv` is designed for passing the user data. And the last one `pcbe` is the thread pool environment.
+Developers use this API to create an IO thread pool which is designed for handling IO operations. The first parameter, `fl`, is a file handle. e.g. File Handles, Sockets or etc. The second parameter, `pfnio`, is a callback function for handling IO completion events. The third parameter, `pv`, is designed for passing the user data. And the last one, `pcbe`, is the thread pool environment.
 
 E.g.
 ```c++
