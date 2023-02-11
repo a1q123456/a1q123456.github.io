@@ -1,6 +1,6 @@
 ---
 title:  "Creating a Dependency Injection Library in C++"
-subtitle: "Parameters Counter"
+subtitle: "Part 2 Parameters Counter"
 date:   2018-08-28 00:00:00
 ---
 
