@@ -1,3 +1,4 @@
+import { ReactElement } from "react"
 
 export interface Post {
     id: string

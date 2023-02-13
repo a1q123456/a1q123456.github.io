@@ -5,11 +5,16 @@ import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeFormat from "rehype-format";
-import rehypeStringify from "rehype-stringify";
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { matter } from 'vfile-matter'
 import { Post } from "@/models/post";
+import { VFile } from "vfile-matter/lib";
+import { Parent, Element } from 'hast'
+import Image from "next/image";
+import { createElement, ReactElement } from "react";
+import { renderToStaticMarkup } from 'react-dom/server'
+import rehypeReact from 'rehype-react'
 
 
 const BLOG_DIR = path.join(process.cwd(), "blogs")
@@ -21,20 +26,42 @@ interface MarkdownMetadata {
     subtitle?: string
 }
 
+const loadMarkdownImages = () => {
+    const getImgs = (root: Parent): Element[] => {
+        return [
+            ...root.children.filter(ch => ch.type === 'element' && ch.tagName === 'img') as Element[],
+            ...root.children.filter(ch => "children" in ch).flatMap(ch => getImgs(ch as Parent))
+        ]
+    }
+
+    return async (root: Parent, file: VFile) => {
+        const images = getImgs(root)
+        const imported = await Promise.all(images.map(img => import(`/images/${path.basename(img.properties!.src as string)}`)))
+        const imageModules = imported.map(i => i.default)
+        images.map((img, i) => img.properties!.src = imageModules[i])
+    }
+}
+
 const renderMd = async (mdContent: string, fullData: boolean) => {
     const result = await remark()
         .use(remarkParse)
+        .use(() => (_, file) => { matter(file) })
         .use(remarkGfm)
         .use(remarkFrontmatter, ['yaml', 'toml'])
-        .use(() => (_, file) => { matter(file) })
         .use(remarkRehype)
+        .use(loadMarkdownImages)
         .use(rehypeFormat)
         .use(rehypeHighlight)
-        .use(rehypeStringify)
+        .use(rehypeReact, {
+            components: {
+                img: Image as any
+            },
+            createElement
+        })
         .process(fullData ? mdContent : mdContent.split('\n').slice(0, PREVIEW_FILE_LINES).join('\n'))
     return {
         ...(result.data.matter as MarkdownMetadata),
-        content: result.value as string,
+        content: renderToStaticMarkup(result.result as ReactElement),
         date: Date.parse((result.data.matter as MarkdownMetadata).date)
     }
 }
