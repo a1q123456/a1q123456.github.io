@@ -26,7 +26,7 @@ interface MarkdownMetadata {
     subtitle?: string
 }
 
-const loadMarkdownImages = () => {
+const loadMarkdownImages = (opt: { mdFileName: string }) => {
     const getImgs = (root: Parent): Element[] => {
         return [
             ...root.children.filter(ch => ch.type === 'element' && ch.tagName === 'img') as Element[],
@@ -36,20 +36,20 @@ const loadMarkdownImages = () => {
 
     return async (root: Parent, file: VFile) => {
         const images = getImgs(root)
-        const imported = await Promise.all(images.map(img => import(`/images/${path.basename(img.properties!.src as string)}`)))
+        const imported = await Promise.all(images.map(img => import(`/images/${opt.mdFileName}/${path.basename(img.properties!.src as string)}`)))
         const imageModules = imported.map(i => i.default)
         images.map((img, i) => img.properties!.src = imageModules[i])
     }
 }
 
-const renderMd = async (mdContent: string, fullData: boolean) => {
+const renderMd = async (fileName: string, mdContent: string, fullData: boolean) => {
     const result = await remark()
         .use(remarkParse)
         .use(() => (_, file) => { matter(file) })
         .use(remarkGfm)
         .use(remarkFrontmatter, ['yaml', 'toml'])
         .use(remarkRehype)
-        .use(loadMarkdownImages)
+        .use(loadMarkdownImages, { mdFileName: fileName })
         .use(rehypeFormat)
         .use(rehypeHighlight)
         .use(rehypeReact, {
@@ -84,7 +84,7 @@ const getPostListForCategory = async (categoryId: string) => {
         .map(fileName => path.join(categoryFolder, fileName))
 
     const postList = await Promise.all(fileNames.map(async mdFile => {
-        const rendered = await renderMd(await fs.readFile(mdFile, 'utf-8'), false)
+        const rendered = await renderMd(path.basename(mdFile), await fs.readFile(mdFile, 'utf-8'), false)
 
         return {
             categoryId: path.basename(path.dirname(mdFile)),
@@ -98,7 +98,7 @@ const getPostListForCategory = async (categoryId: string) => {
 
 export const getPost = async (categoryId: string, postId: string) => {
     const mdFile = path.join(BLOG_DIR, categoryId, `${postId}.md`)
-    const rendered = await renderMd(await fs.readFile(mdFile, 'utf-8'), true)
+    const rendered = await renderMd(path.basename(mdFile), await fs.readFile(mdFile, 'utf-8'), true)
     return {
         categoryId: path.basename(path.dirname(mdFile)),
         id: path.parse(mdFile).name,
