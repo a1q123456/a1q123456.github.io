@@ -32,3 +32,26 @@ a:hover {
 a:active {
     color: $link-color-pressed;
 }
+.responsiveImg {
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+@media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
+    .responsiveImg {
+        width: 100%;
+    }
+}
+
+@media only screen and (min-width: $small-sreen-dimension) {
+    .responsiveImg {
+        width: 45vw;
+    }
+}
+
+@media only screen and (min-width: $large-sreen-dimension) {
+    .responsiveImg {
+        width: 30vw;
+    }
+}
+

@@ -5,8 +5,10 @@ import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeFormat from "rehype-format";
+import rehypeKatex from 'rehype-katex'
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
+import remarkMath from 'remark-math'
 import { matter } from 'vfile-matter'
 import { Post } from "@/models/post";
 import { VFile } from "vfile-matter/lib";
@@ -15,6 +17,7 @@ import Image from "next/image";
 import { createElement, ReactElement } from "react";
 import { renderToStaticMarkup } from 'react-dom/server'
 import rehypeReact from 'rehype-react'
+import rehypeStringify from "rehype-stringify/lib";
 
 
 const BLOG_DIR = path.join(process.cwd(), "blogs")
@@ -38,17 +41,22 @@ const loadMarkdownImages = (opt: { mdFileName: string }) => {
         const images = getImgs(root)
         const imported = await Promise.all(images.map(img => import(`/images/${opt.mdFileName}/${path.basename(img.properties!.src as string)}`)))
         const imageModules = imported.map(i => i.default)
-        images.map((img, i) => img.properties!.src = imageModules[i])
+        images.map((img, i) => {
+            img.properties!.src = imageModules[i]
+            img.properties!.className = "responsiveImg";
+        })
     }
 }
 
 const renderMd = async (fileName: string, mdContent: string, fullData: boolean) => {
     const result = await remark()
         .use(remarkParse)
+        .use(remarkMath)
+        .use(remarkFrontmatter, ['yaml', 'toml'])
         .use(() => (_, file) => { matter(file) })
         .use(remarkGfm)
-        .use(remarkFrontmatter, ['yaml', 'toml'])
         .use(remarkRehype)
+        .use(rehypeKatex)
         .use(loadMarkdownImages, { mdFileName: fileName })
         .use(rehypeFormat)
         .use(rehypeHighlight)

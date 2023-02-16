@@ -1,12 +1,12 @@
 ---
 title:  "Interpolation"
 subtitle: "Part 1 Polynomial Interpolation"
-date:   2023-02-15 00:00:00
+date:   2023-02-16 00:00:00
 ---
 
 Interpolation is commonly used in computer programs. The most common interpolation method is linear interpolation, which takes two values and generates continuous uniform distributed results. For example, say we have a data set `[10, 30, 40, 0]`. The linear interpolation result of the data set will be like the following:
 
-![Linear Interpolation](/images/1-interpolation-and-splines.md/linear.jpg)
+![Linear Interpolation](/images/1-interpolation-polynomial.md/linear.jpg)
 
 As the figure shows, linear interpolation does generate a continuous result. However, the curve that it generates could be smoother. Sometimes, we may not want this effect. For example, if we're going to describe a spherical object using a spline, those sharp corners may make it look bad; Or if we are trying to interpolate an image, we may find the interpolated image weird.
 
@@ -49,6 +49,7 @@ y_{4}
 $$
 
 To calculate $\begin{bmatrix} a \\ b \\ c \\ d \end{bmatrix}$, we transform the above equation to:
+
 $$
 \begin{bmatrix}
 a \\
@@ -71,13 +72,14 @@ y_{4}
 \end{bmatrix}
 $$
 
-Then, we calculate the above expression:
+Then, we use the values to calculate the above formula:
+
 $$
 \begin{bmatrix}
 a \\
 b \\
 c \\
-d \\
+d
 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -85,17 +87,18 @@ d \\
 15.0000000000000 \\ 
 11.6666666666667 \\ 
 10 
-\end{bmatrix}$$
+\end{bmatrix}
+$$
 
 Then, the form of the polynomial is $-6.67x^3+15x^2+11.67x+10=y$.
 If we draw the above polynomial, the result will be:
 
-![Polynomial](/images/1-interpolation-and-splines.md/polynomial.jpg)
+![Polynomial](/images/1-interpolation-polynomial.md/polynomial.jpg)
 
 The blue curve is the polynomial curve. It passes through all the data points and generates a smooth result. 
 
 We can simplify the above steps to a small program:
-```matlab
+```c
 function coeffs = function_coeff(xvals, yvals)
     A = transpose([
         xvals.^3; xvals.^2; xvals; [1, 1, 1, 1]
