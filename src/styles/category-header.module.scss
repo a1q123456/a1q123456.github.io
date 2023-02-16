@@ -62,19 +62,19 @@
     flex-grow: 1;
 }
 
-@media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
-    .headerItemList {
-        padding: 0 10vw;
-        flex-grow: 1;
-    }
-}
-
 @media only screen and (min-width: $small-sreen-dimension) {
     .socalProfilesWrapper {
         position: absolute;
         top: 0;
         right: 0;
         margin: 10px;
+    }
+}
+
+@media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
+    .headerItemList {
+        padding: 0 10vw;
+        flex-grow: 1;
     }
 }
 

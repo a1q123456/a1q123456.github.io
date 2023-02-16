@@ -37,13 +37,14 @@ a:active {
     display: block;
     margin: 0 auto;
 }
-@media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
+
+@media only screen and (max-width: $small-sreen-dimension) {
     .responsiveImg {
         width: 100%;
     }
 }
 
-@media only screen and (min-width: $small-sreen-dimension) {
+@media only screen and (min-width: $small-sreen-dimension) and (max-width: $large-sreen-dimension) {
     .responsiveImg {
         width: 45vw;
     }
