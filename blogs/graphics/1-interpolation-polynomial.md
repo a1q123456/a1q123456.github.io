@@ -8,7 +8,7 @@ Interpolation is commonly used in computer programs. The most common interpolati
 
 ![Linear Interpolation](/images/1-interpolation-polynomial.md/linear.jpg)
 
-As the figure shows, linear interpolation does generate a continuous result. However, the curve that it generates could be smoother. Sometimes, we may not want this effect. For example, if we're going to describe a spherical object using a spline, those sharp corners may make it look bad; Or if we are trying to interpolate an image, we may find the interpolated image weird.
+As the figure shows, linear interpolation does generate a continuous result. However, the curve that it generates could be smoother. Sometimes, we may not want those sharp corners. For example, if we're going to describe a spherical object, those sharp corners may make it look bad; Or if we are trying to interpolate an image, we may find the interpolated image weird.
 
 To address this issue, we should use interpolation methods which generate smooth results.
 
@@ -72,7 +72,7 @@ y_{4}
 \end{bmatrix}
 $$
 
-Then, we use the values to calculate the above formula:
+Then, we substitute $x$ and $y$ with the values to calculate the above formula:
 
 $$
 \begin{bmatrix}
@@ -97,7 +97,7 @@ If we draw the above polynomial, the result will be:
 
 The blue curve is the polynomial curve. It passes through all the data points and generates a smooth result. 
 
-We can simplify the above steps to a small program:
+We can simplify the above steps to a small Matlab program:
 ```c
 function coeffs = function_coeff(xvals, yvals)
     A = transpose([
