@@ -1,5 +1,5 @@
 ---
-title:  "Interpolation"
+title:  "Signal Interpolation"
 subtitle: "Part 1 Polynomial Interpolation"
 date:   2023-02-16 00:00:00
 ---
@@ -99,14 +99,20 @@ The blue curve is the polynomial curve. It passes through all the data points an
 
 We can simplify the above steps to a small Matlab program:
 ```c
-function coeffs = function_coeff(xvals, yvals)
-    A = transpose([
-        xvals.^3; xvals.^2; xvals; [1, 1, 1, 1]
-    ]);
+function coeffs = find_coeff(xvals, yvals)
+    A = transpose(xvals).^(length(xvals)-1:-1:0);
 
     coeffs = transpose(A \ transpose(yvals));
 end
-```
-Where `coeffs` is the coefficients $a$, $b$, $c$ and $d$.
 
-If we have more data points, we need to create a polynomial with a higher degree. However, calculating the coefficients may take a long time if there are a lot of data. To make this process faster and gain more control over the curve, we can use multiple polynomials to describe each piece of the shape, called *spines*. We will discuss splines in the following article.
+function y = polynomial(coeffs, t)
+    powers = transpose(length(coeffs) - 1:-1:0);
+    y = sum(transpose(transpose(t.^powers).*coeffs));
+end
+
+```
+Where `coeffs` is the coefficients for the n-degree polynomial. If we have more values to interpolate, the `find_coeff` function generates a higher-degree polynomial. For example, to interpolate the data set `[10, 30, 40, 0, 10, 15, 0]`, the result coefficients will be `[0.6806, -12.6667, 88.2639, -280.8333, 388.5556, -164.0000, 10.0000]`, it results a curve like the following:
+
+![Higher-Degree Polynomial](/images/1-interpolation-polynomial.md/higher-degree.jpg)
+
+If we have more data points, we need to create a higher-degree polynomial. However, calculating the coefficients may take a long time if there are a lot of data. To make this process faster and gain more control over the curve, we can use multiple polynomials to describe each piece of the shape, called *spines*. We will discuss splines in the following article.
