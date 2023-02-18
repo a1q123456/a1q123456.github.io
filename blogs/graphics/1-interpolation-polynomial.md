@@ -72,7 +72,7 @@ y_{4}
 \end{bmatrix}
 $$
 
-Then, we substitute $x$ and $y$ with the values to calculate the above formula:
+Then, we substitute $x$ and $y$ with the values to resolve the above formula:
 
 $$
 \begin{bmatrix}
