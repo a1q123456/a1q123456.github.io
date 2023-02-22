@@ -1,7 +1,7 @@
 ---
 title:  "Signal Interpolation"
 subtitle: "Part 2 Splines"
-date:   2023-02-16 00:00:00
+date:   2023-02-22 00:00:00
 ---
 
 In the last article, we discussed polynomial interpolation. It works, but we will struggle to find coefficients for big data sets. Instead of using polynomial interpolation, we can use splines to solve this issue. 
@@ -164,6 +164,6 @@ end
 
 The following figure is generated based on $C=0.5$:
 
-![Catmull–Rom](/images/2-interpolation-splines.md/catmull–rom.jpg)
+![Catmull–Rom](/images/2-interpolation-splines.md/catmullrom.jpg)
 
 My [SWRenderer](https://github.com/a1q123456/SWRenderer) project uses the Hermite spline and the cubic convolution to interpolate texture data. We will discuss cubic convolution in the following article.
