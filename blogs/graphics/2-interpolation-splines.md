@@ -139,7 +139,7 @@ $$
 H(x) = (2x^3 - 3x^2 + 1)p_1 + (3x^2-2x^3)p_2 + (x^3 - 2x^2 + x)m_1 + (x^3 - x^2)m_2
 $$
 
-Where $p_1$ and $p_2$ are the control points, $m_1$ and $m_2$ are tangents. It is a **canonical spline** if we calculate the tangents by using the following formula:
+Where $p_1$ and $p_2$ are the control points, $m_1$ and $m_2$ are tangents. It becomes a **canonical spline** if we calculate the tangents by using the following formula:
 $$
 m_k = (1 - C) \frac{p_{k+1} - p_{k-1}} {2}
 $$
