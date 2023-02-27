@@ -1,5 +1,5 @@
 ---
-title:  "Texture Interpolation"
+title:  "Interpolation in Graphics World"
 subtitle: "Part 2 Splines"
 date:   2023-02-22 00:00:00
 ---

@@ -1,5 +1,5 @@
 ---
-title:  "Texture Interpolation"
+title:  "Interpolation in Graphics World"
 subtitle: "Part 1 Polynomial Interpolation"
 date:   2023-02-16 00:00:00
 ---

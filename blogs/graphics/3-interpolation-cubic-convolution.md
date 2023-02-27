@@ -1,5 +1,5 @@
 ---
-title:  "Texture Interpolation"
+title:  "Interpolation in Graphics World"
 subtitle: "Part 3 Cubic Convolution"
 date:   2023-02-27 00:00:00
 ---
