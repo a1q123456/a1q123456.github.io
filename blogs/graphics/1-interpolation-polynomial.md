@@ -1,5 +1,5 @@
 ---
-title:  "Signal Interpolation"
+title:  "Texture Interpolation"
 subtitle: "Part 1 Polynomial Interpolation"
 date:   2023-02-16 00:00:00
 ---
