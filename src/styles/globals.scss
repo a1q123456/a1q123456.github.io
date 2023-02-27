@@ -18,6 +18,9 @@ body {
     background-color: transparent !important;
 }
 
+.math-display {
+    overflow: auto;
+}
 
 a {
     color: $link-color;
