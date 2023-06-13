@@ -16,7 +16,7 @@ $$
 S_{n,t}(x) := \sum_{i} a_iB_{i,n}(x)
 $$
 
-Where $n$ is the degree of the spline; $n$ is knots; $a$ is control points; $B$ is the B-spline basis function, defined by:
+Where $n$ is the degree of the spline; $t$ is knots; $a$ is control points; $B$ is the B-spline basis function, defined by:
 
 $$
 B_{i,0} := 
