@@ -30,7 +30,7 @@ where  are knots,  is the degree.
 Surely, calculating this function when rendering every frame is horribly slow, but luckily, we're able to simplify this if we know what degree we want. 
 
 We should define the above function in matlab in order to simplify it later:
-```matlab
+```c
 function y = b_basis(U, u, i, k)
     if k == 0
         y = piecewise((U(i) <= u) & (u <= U(i+1)), 1, 0);
@@ -48,7 +48,7 @@ function y = b_basis(U, u, i, k)
 end
 ```
 Let's give it some assumptions so that we can simplify the function. In this case, we can assume that $u_{i+1}$ is equal to $ u_i+1$
-```matlab
+```c
 syms u U(i) i U_0 P
 assume(U_0+3 < u & u < U_0+4);
 
@@ -59,28 +59,28 @@ N_3 =  b_basis([U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+6 U_0+7 U_0+8], u, 4, 3);
 ```
 
 As $u$ is between $U_0+3$ and $U_0+4$, we can plug $P=u-U_0+3$ into those equations so that we'll be able to call the function with only the fractional part.
-```matlab
+```c
 N_0 = expand(subs(N_0, U_0, u-P-3))
 ```
 $$
 -\frac{P^3 }{6}+\frac{P^2 }{2}-\frac{P}{2}+\frac{1}{6}
 $$
-```matlab
+```c
 N_1 = expand(subs(N_1, U_0, u-P-3))
 ```
 $$\frac{P^3 }{2}-P^2 +\frac{2}{3}$$
-```matlab
+```c
 N_2 = expand(subs(N_2, U_0, u-P-3))
 ```
 $$-\frac{P^3 }{2}+\frac{P^2 }{2}+\frac{P}{2}+\frac{1}{6}$$
-```matlab
+```c
 N_3 = expand(subs(N_3, U_0, u-P-3))
 ```
 $$\frac{P^3 }{6}$$
 You may have noticed that we're assuming that we've assumed that the knot vectors are uniform. i.e. an equivalent knot vector would be something like $(0, 1, 2, 3, 4, 5, 6)$. This is not 100% useful as we sometimes need to insert some end knots so that the starting and the ending parts can stick to the first and the last control point. To address this, we should create some more functions.
 
 The functions for the first span can be simplified to:
-```matlab
+```c
 assume(U_0 < u & u < U_0+1)
 N_0_start_0 =  b_basis([U_0 U_0 U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+6 U_0+7], u, 1, 3);
 N_0_start_0 = expand(subs(N_0_start_0, U_0, u-P))
@@ -88,7 +88,7 @@ N_0_start_0 = expand(subs(N_0_start_0, U_0, u-P))
 $$
 \frac{7\,P^3 }{4}-\frac{9\,P^2 }{2}+3\,P
 $$
-```matlab
+```c
 N_1_start_0 =  b_basis([U_0 U_0 U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+6 U_0+7], u, 2, 3);
 N_1_start_0 = expand(subs(N_1_start_0, U_0, u-P))
 ```
@@ -96,13 +96,13 @@ $$\frac{3\,P^2 }{2}-\frac{11\,P^3 }{12}$$
 As the first span is only affected by the first three control points, we only need three functions. The last function is actually the same as the forth NURBS function $N_3$ so it doesn't make sense to make it again.
 
 The functions for the second span can be simplified to:
-```matlab
+```c
 assume(U_0+1 < u & u < U_0+2)
 N_0_start_1 =  b_basis([U_0 U_0 U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+6 U_0+7], u, 1, 3);
 N_0_start_1 = expand(subs(N_0_start_1, U_0, u-P-1))
 ```
 $$-\frac{P^3 }{4}+\frac{3\,P^2 }{4}-\frac{3\,P}{4}+\frac{1}{4}$$
-```matlab
+```c
 N_1_start_1 =  b_basis([U_0 U_0 U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+6 U_0+7], u, 2, 3);
 N_1_start_1 = expand(subs(N_1_start_1, U_0, u-P-1))
 ```
@@ -111,26 +111,26 @@ We need four functions for the second span as it's affected by the first forth c
 
 
 The functions for the last second span can be simplified to:
-```matlab
+```c
 assume(U_0+3 < u & u < U_0+4)
 N_0_end_1 =  b_basis([U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+5 U_0+5], u, 3, 3);
 N_0_end_1 = expand(subs(N_0_end_1, U_0, u-P-3))
 ```
 $$-\frac{7\,P^3 }{12}+\frac{P^2 }{2}+\frac{P}{2}+\frac{1}{6}$$
-```matlab
+```c
 N_1_end_1 =  b_basis([U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+5 U_0+5], u, 4, 3);
 N_1_end_1 = expand(subs(N_1_end_1, U_0, u-P-3))
 ```
 $$\frac{P^3 }{4}$$
 
 And finally, the functions for the last span can be simplified to:
-```matlab
+```c
 assume(U_0+4 < u & u < U_0+5)
 N_0_end_0 =  b_basis([U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+5 U_0+5], u, 3, 3);
 N_0_end_0 = expand(subs(N_0_end_0, U_0, u-P-4))
 ```
 $$\frac{11\,P^3 }{12}-\frac{5\,P^2 }{4}-\frac{P}{4}+\frac{7}{12}$$
-```matlab
+```c
 N_1_end_0 =  b_basis([U_0 U_0+1 U_0+2 U_0+3 U_0+4 U_0+5 U_0+5 U_0+5], u, 4, 3);
 N_1_end_0 = expand(subs(N_1_end_0, U_0, u-P-4))
 ```
@@ -139,7 +139,7 @@ $$-\frac{7\,P^3 }{4}+\frac{3\,P^2 }{4}+\frac{3\,P}{4}+\frac{1}{4}$$
 Given the functions, we should be able to try rendering a curve and test against the recursive function to see if our simplifications are correct.
 
 Let's the recursive NURBS first:
-```matlab
+```c
 function y = nurbs(U, W, C, u, k)
     y = 0;
     b = 0;
@@ -175,14 +175,14 @@ end
 ```
 
 And then, let's define the curve:
-```matlab
+```c
 spline_control_points = [1 5 3 -1 14 22 9 3];
 spline_weights = [1 1 1 1 1 1 1 1];
 spline_knots = [1 1 1 2 3 4 5 6 7 8 8 8];
 ```
 
 Draw the curve using the recursive function. We'll check our simplified functions against this.
-```matlab
+```c
 my_nurbs = @(t) nurbs(spline_knots, spline_weights, spline_control_points, t, 3);
 
 
@@ -199,7 +199,7 @@ hold off;
 ![Kernel](/images/4-nurbs-curves.md/nurbs_resursive.jpg)
 
 And then, let's draw the curve with our simplified functions. Actually, with the simplified functions, it's so natural to use convolution to calculate the curve, enabling the potential optimisations by fast fourier transform:
-```matlab
+```c
 F_0 = matlabFunction(N_0);
 F_1 = matlabFunction(N_1);
 F_2 = matlabFunction(N_2);
